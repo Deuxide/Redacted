@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { ScreenShell } from '../components/ScreenShell';
 import { useI18n } from '../i18n/LanguageProvider';
+import { SKIP_VOTE_ID, activePlayers } from '../game/results';
 import { useGame } from '../state/GameProvider';
 import type { ActiveGame } from '../types/game';
 import styles from './VotingScreen.module.css';
@@ -35,7 +36,8 @@ function VoteTurn({
   const [step, setStep] = useState<'pass' | 'choose' | 'confirm' | 'clearing'>('pass');
   const [selected, setSelected] = useState<string[]>([]);
   const voter = game.players[game.voteIndex];
-  const needed = game.suspectsPerVote;
+  const active = activePlayers(game.players);
+  const needed = Math.min(game.suspectsPerVote, Math.max(1, active.length - 1));
   const locked = Boolean(game.votes[voter.id]);
 
   useEffect(() => {
@@ -62,12 +64,12 @@ function VoteTurn({
     );
   }
 
-  const names = game.players.filter((player) => selected.includes(player.id)).map((player) => player.name);
+  const names = selected.map((id) => (id === SKIP_VOTE_ID ? t('skipVote') : game.players.find((player) => player.id === id)?.name ?? id));
 
   return (
     <ScreenShell title={t('voterStep', { n: game.voteIndex + 1 })} subtitle={t('passPhone', { name: voter.name })} onBack={step === 'pass' ? onLeave : undefined}>
       <p className={styles.player}>{voter.name}</p>
-      <p className={styles.step}>{t('voteProgress', { n: game.voteIndex + 1, total: game.players.length })}</p>
+      <p className={styles.step}>{t('voteProgress', { n: active.filter((player) => game.votes[player.id] || player.id === voter.id).length, total: active.length })}</p>
       {step === 'pass' ? (
         <>
           <p className={styles.copy}>{t('votesHidden')}</p>
@@ -86,12 +88,17 @@ function VoteTurn({
               .map((player) => {
                 const pressed = selected.includes(player.id);
                 return (
-                  <button key={player.id} type="button" className={styles.choice} aria-pressed={pressed} onClick={() => toggle(player.id)}>
+                  <button key={player.id} type="button" className={styles.choice} aria-pressed={pressed} disabled={player.eliminated} onClick={() => toggle(player.id)}>
                     <span className={styles.mark}>{pressed ? '●' : '○'}</span>
                     {player.name}
+                    {player.eliminated ? ` — ${t('cannotVote')}` : ''}
                   </button>
                 );
               })}
+            <button type="button" className={styles.skip} aria-pressed={selected.includes(SKIP_VOTE_ID)} onClick={() => toggle(SKIP_VOTE_ID)}>
+              <span className={styles.mark}>{selected.includes(SKIP_VOTE_ID) ? '●' : '○'}</span>
+              {t('skipVote')}
+            </button>
           </div>
           <button type="button" className={styles.primary} disabled={selected.length !== needed} onClick={() => setStep('confirm')}>
             {t('reviewVote')}

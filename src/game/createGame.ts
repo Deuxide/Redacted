@@ -23,6 +23,9 @@ export function createActiveGame(draft: SetupDraft, wordSet: WordSet): ActiveGam
     tieBehavior: draft.tieBehavior,
     showRoleDuringReveal: draft.showRoleDuringReveal !== false,
     votes: {},
+    round: 1,
+    eliminations: [],
+    pointsAwarded: false,
     phase: 'reveal',
     players: draft.players.map((player, index) => {
       const role = undercoverSlots.has(index) ? 'undercover' : doesntKnowSlots.has(index) ? 'doesntKnow' : 'civilian';
@@ -32,6 +35,8 @@ export function createActiveGame(draft: SetupDraft, wordSet: WordSet): ActiveGam
         role,
         word: role === 'undercover' ? secret.undercoverWord : role === 'civilian' ? secret.civilianWord : '',
         hasSeenWord: false,
+        eliminated: false,
+        individualWins: 0,
       };
     }),
   };

@@ -6,7 +6,7 @@ import { useGame } from '../state/GameProvider';
 import styles from './ResultsScreen.module.css';
 
 export function ResultsScreen() {
-  const { game, playAgain, newGame, revote, leaveGame } = useGame();
+  const { game, session, roundPoints, playAgain, continueSession, newGame, revote, leaveGame } = useGame();
   const { t } = useI18n();
 
   if (!game || game.phase !== 'results') {
@@ -18,15 +18,15 @@ export function ResultsScreen() {
   }
 
   const tally = tallyVotes(game);
-  const title = tally.tied ? t('tieResult') : tally.civiliansWin ? t('civiliansWin') : t('specialWin');
-  const why = tally.tied ? t('whyTie') : tally.civiliansWin ? t('whyCivilians') : t('whySpecial');
+  const title = tally.outcome === 'draw' ? t('drawResult') : tally.outcome === 'civilianWin' ? t('civiliansWin') : tally.outcome === 'doesntKnowWin' ? t('doesntKnowWin') : t('undercoverWin');
+  const why = tally.outcome === 'draw' ? t('drawReason') : tally.outcome === 'civilianWin' ? t('whyCivilians') : tally.outcome === 'doesntKnowWin' ? t('whyDoesntKnow') : t('whyUndercover');
   const ranking = [...game.players].sort((a, b) => (tally.counts[b.id] ?? 0) - (tally.counts[a.id] ?? 0) || a.name.localeCompare(b.name));
   const hasUndercover = game.players.some((player) => player.role === 'undercover');
   const hasBlank = game.players.some((player) => player.role === 'doesntKnow');
 
   return (
     <ScreenShell title={t('gameOver')} onBack={leaveGame}>
-      <section className={tally.civiliansWin ? styles.win : styles.lose} aria-live="polite">
+      <section className={tally.outcome === 'draw' ? styles.draw : tally.civiliansWin ? styles.win : styles.lose} aria-live="polite">
         <p>{t('gameOver')}</p>
         <h2>{title}</h2>
         <p>{why}</p>
@@ -54,6 +54,32 @@ export function ResultsScreen() {
         ) : null}
       </section>
 
+      {game.players.some((player) => player.doesntKnowGuess && player.doesntKnowGuess !== 'pending') ? (
+        <section>
+          <h2 className={styles.section}>{t('individualWinners')}</h2>
+          {game.players.filter((player) => player.doesntKnowGuess && player.doesntKnowGuess !== 'pending').map((player) => (
+            <article key={player.id} className={styles.person}>
+              <strong>{player.name}</strong>
+              <p>{player.doesntKnowGuess === 'correct' ? `✓ ${t('guessedRight')}` : `✗ ${t('guessedWrong')}`}</p>
+            </article>
+          ))}
+        </section>
+      ) : null}
+      <section>
+        <h2 className={styles.section}>{t('eliminatedLabel')}</h2>
+        {game.eliminations.length ? game.eliminations.map((item) => {
+          const player = game.players.find((entry) => entry.id === item.playerId);
+          if (!player) return null;
+          return (
+            <article key={`${item.round}-${item.playerId}`} className={styles.person}>
+              <p>{t('roundLabel', { n: item.round })}</p>
+              <strong>{player.name}</strong>
+              <RoleBadge role={player.role} />
+              <p>{player.role === 'doesntKnow' ? t('noWord') : player.word}</p>
+            </article>
+          );
+        }) : <p>{t('tieLabel')}</p>}
+      </section>
       <section>
         <h2 className={styles.section}>{t('whoHadWhat')}</h2>
         <div className={styles.people}>
@@ -87,15 +113,24 @@ export function ResultsScreen() {
           {t('tieRevote')}
         </button>
       ) : null}
-      <button type="button" className={styles.primary} onClick={playAgain}>
-        {t('playAgain')}
-      </button>
+      <section>
+        <h2 className={styles.section}>{t('roundPoints')}</h2>
+        {game.players.map((player) => (
+          <p key={player.id}>{player.name} {t('plusPoints', { count: roundPoints[player.id] ?? 0 })}</p>
+        ))}
+      </section>
+      <section>
+        <h2 className={styles.section}>{t('sessionScore')}</h2>
+        {[...(session?.players ?? [])].sort((a, b) => b.points - a.points).map((player, index) => (
+          <p key={player.id}>{index + 1}. {player.name} {t('pointsLabel', { count: player.points })}</p>
+        ))}
+      </section>
+      <button type="button" className={styles.primary} onClick={continueSession}>{t('continueGame')}</button>
+      <button type="button" className={styles.secondary} onClick={playAgain}>{t('playAgain')}</button>
       <button type="button" className={styles.secondary} onClick={newGame}>
         {t('newGame')}
       </button>
-      <button type="button" className={styles.secondary} onClick={leaveGame}>
-        {t('home')}
-      </button>
+      <button type="button" className={styles.secondary} onClick={leaveGame}>{t('backToMenu')}</button>
     </ScreenShell>
   );
 }

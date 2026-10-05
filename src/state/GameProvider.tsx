@@ -3,6 +3,8 @@ import type { ActiveGame, AppScreen, SetupDraft, WordSet } from '../types/game';
 import { playableGroups } from '../types/game';
 import { BUILTIN_WORD_SET } from '../data/builtinWordSets';
 import { createActiveGame } from '../game/createGame';
+import { applyRoundPoints, emptySession, loadPointSession, roundPointsFor, savePointSession, type PointSession } from '../game/sessionPoints';
+import { SKIP_VOTE_ID, activePlayers, afterElimination, firstActiveIndex, nextActiveIndex, resolveCompletedVote, wordsMatch } from '../game/results';
 import { addPlayer, balanceRoles, clampSuspects, loadDraft, removePlayer, resizePlayers, saveDraft } from '../game/draft';
 import { clearSessionGame, loadSessionGame, saveSessionGame, screenForPhase } from '../game/sessionGame';
 import { useI18n } from '../i18n/LanguageProvider';
@@ -15,6 +17,8 @@ interface GameContextValue {
   screen: AppScreen;
   draft: SetupDraft;
   game: ActiveGame | null;
+  session: PointSession | null;
+  roundPoints: Record<string, number>;
   wordSets: WordSet[];
   selectedSet: WordSet;
   editingSet: WordSet | null;
@@ -40,8 +44,11 @@ interface GameContextValue {
   markCurrentSeenAndAdvance: () => void;
   startVoting: () => void;
   castVote: (voterId: string, suspectIds: string[]) => void;
+  continueAfterElimination: () => void;
+  submitGuess: (playerId: string, guess: string) => void;
   revote: () => void;
   playAgain: () => void;
+  continueSession: () => void;
   newGame: () => void;
   leaveGame: () => void;
   createCustomSet: () => void;
@@ -70,10 +77,16 @@ export function GameProvider({ children }: { children: ReactNode }) {
   const [customSets, setCustomSets] = useState<WordSet[]>(() => loadCustomSets());
   const [editingSetId, setEditingSetId] = useState<string | null>(null);
   const [startError, setStartError] = useState<MessageKey | null>(null);
+  const [session, setSession] = useState<PointSession | null>(() => loadPointSession());
+  const [roundPoints, setRoundPoints] = useState<Record<string, number>>({});
 
   const wordSets = useMemo(() => [BUILTIN_WORD_SET, ...customSets], [customSets]);
   const selectedSet = wordSets.find((set) => set.id === draft.wordSetId) ?? BUILTIN_WORD_SET;
   const editingSet = customSets.find((set) => set.id === editingSetId) ?? null;
+
+  useEffect(() => {
+    savePointSession(session);
+  }, [session]);
 
   useEffect(() => {
     if (game) saveSessionGame(game);
@@ -81,10 +94,18 @@ export function GameProvider({ children }: { children: ReactNode }) {
   }, [game]);
 
   useEffect(() => {
+    if (!game || game.phase !== 'results' || game.pointsAwarded) return;
+    const earned = roundPointsFor(game);
+    setRoundPoints(earned);
+    setSession((current) => applyRoundPoints(current ?? emptySession(game.players), game, earned));
+    setGame((current) => (current ? { ...current, pointsAwarded: true } : current));
+  }, [game]);
+
+  useEffect(() => {
     if (!game) return;
     const next = screenForPhase(game.phase);
     setScreen((current) =>
-      current === 'reveal' || current === 'discussion' || current === 'voting' || current === 'results' ? next : current,
+      current === 'reveal' || current === 'discussion' || current === 'voting' || current === 'elimination' || current === 'guess' || current === 'results' ? next : current,
     );
   }, [game]);
 
@@ -108,7 +129,10 @@ export function GameProvider({ children }: { children: ReactNode }) {
       const leave = window.confirm(t('leaveConfirm'));
       if (!leave) return;
     }
+    if (session && !window.confirm(t('leaveSession'))) return;
     setGame(null);
+    setSession(null);
+    setRoundPoints({});
     setScreen('home');
   }
 
@@ -117,6 +141,8 @@ export function GameProvider({ children }: { children: ReactNode }) {
       screen,
       draft,
       game,
+      session,
+      roundPoints,
       wordSets,
       selectedSet,
       editingSet,
@@ -190,6 +216,8 @@ export function GameProvider({ children }: { children: ReactNode }) {
           return;
         }
         setStartError(null);
+        setSession(emptySession(nextGame.players));
+        setRoundPoints({});
         setGame(nextGame);
         setScreen('reveal');
       },
@@ -207,28 +235,45 @@ export function GameProvider({ children }: { children: ReactNode }) {
         });
       },
       startVoting: () => {
-        setGame((current) => (current ? { ...current, phase: 'voting', voteIndex: 0, votes: {} } : current));
+        setGame((current) => (current ? { ...current, phase: 'voting', voteIndex: firstActiveIndex(current.players), votes: {}, round: current.round || 1 } : current));
         setScreen('voting');
       },
       castVote: (voterId, suspectIds) => {
         setGame((current) => {
           if (!current || current.phase !== 'voting') return current;
           const voter = current.players[current.voteIndex];
-          if (!voter || voter.id !== voterId || current.votes[voterId]) return current;
+          const active = activePlayers(current.players);
+          const needed = Math.min(current.suspectsPerVote, Math.max(1, active.length - 1));
+          if (!voter || voter.eliminated || voter.id !== voterId || current.votes[voterId]) return current;
           const unique = [...new Set(suspectIds)].filter(
-            (id) => id !== voterId && current.players.some((player) => player.id === id),
+            (id) => id === SKIP_VOTE_ID || (id !== voterId && active.some((player) => player.id === id)),
           );
-          if (unique.length !== current.suspectsPerVote) return current;
+          if (unique.length !== needed) return current;
           const votes = { ...current.votes, [voterId]: unique };
-          if (Object.keys(votes).length >= current.players.length) {
-            return { ...current, votes, phase: 'results', voteIndex: current.players.length - 1 };
-          }
-          return { ...current, votes, voteIndex: current.voteIndex + 1 };
+          const voted = active.filter((player) => votes[player.id]).length;
+          if (voted >= active.length) return resolveCompletedVote({ ...current, votes });
+          return { ...current, votes, voteIndex: nextActiveIndex(current.players, current.voteIndex) };
+        });
+      },
+      continueAfterElimination: () => {
+        setGame((current) => (current && (current.phase === 'elimination' || current.phase === 'guess') ? afterElimination(current) : current));
+      },
+      submitGuess: (playerId, guess) => {
+        setGame((current) => {
+          if (!current || current.phase !== 'guess') return current;
+          return {
+            ...current,
+            players: current.players.map((player) => {
+              if (player.id !== playerId || player.doesntKnowGuess !== 'pending') return player;
+              const correct = wordsMatch(guess, current.civilianWord);
+              return { ...player, doesntKnowGuess: correct ? 'correct' : 'incorrect', individualWins: player.individualWins + (correct ? 1 : 0) };
+            }),
+          };
         });
       },
       revote: () => {
         setGame((current) =>
-          current && current.phase === 'results' ? { ...current, phase: 'voting', voteIndex: 0, votes: {} } : current,
+          current ? { ...current, phase: 'voting', voteIndex: firstActiveIndex(current.players), votes: {} } : current,
         );
         setScreen('voting');
       },
@@ -250,10 +295,36 @@ export function GameProvider({ children }: { children: ReactNode }) {
           set,
         );
         if (!nextGame) return;
+        setRoundPoints({});
+        setGame(nextGame);
+        setScreen('reveal');
+      },
+      continueSession: () => {
+        const source = game;
+        const set = wordSets.find((item) => item.id === source?.wordSetId) ?? selectedSet;
+        if (!source || !session || !playableGroups(set).length) return;
+        const nextGame = createActiveGame(
+          {
+            playerCount: session.players.length,
+            undercoverCount: source.players.filter((player) => player.role === 'undercover').length,
+            doesntKnowCount: source.players.filter((player) => player.role === 'doesntKnow').length,
+            suspectsPerVote: source.suspectsPerVote,
+            tieBehavior: source.tieBehavior,
+            showRoleDuringReveal: source.showRoleDuringReveal,
+            wordSetId: set.id,
+            players: session.players.map((player) => ({ id: player.id, name: player.name })),
+          },
+          set,
+        );
+        if (!nextGame) return;
+        setRoundPoints({});
         setGame(nextGame);
         setScreen('reveal');
       },
       newGame: () => {
+        if (session && !window.confirm(t('leaveSession'))) return;
+        setSession(null);
+        setRoundPoints({});
         setGame(null);
         setStartError(null);
         setScreen('setup');
@@ -300,7 +371,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
         setScreen('word-sets');
       },
     };
-  }, [customSets, draft, editingSet, editingSetId, game, screen, selectedSet, startError, t, wordSets]);
+  }, [customSets, draft, editingSet, editingSetId, game, roundPoints, screen, selectedSet, session, startError, t, wordSets]);
 
   return <GameContext.Provider value={value}>{children}</GameContext.Provider>;
 }

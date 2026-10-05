@@ -1,7 +1,9 @@
 import { LanguageProvider } from './i18n/LanguageProvider';
 import { ThemeProvider } from './theme/ThemeProvider';
 import { DiscussionScreen } from './screens/DiscussionScreen';
+import { EliminationScreen } from './screens/EliminationScreen';
 import { ExportScreen } from './screens/ExportScreen';
+import { GuessScreen } from './screens/GuessScreen';
 import { HomeScreen, SettingsScreen } from './screens/HomeScreen';
 import { ImportScreen } from './screens/ImportScreen';
 import { ResultsScreen } from './screens/ResultsScreen';
@@ -34,6 +36,10 @@ function AppRouter() {
       return <DiscussionScreen />;
     case 'voting':
       return <VotingScreen />;
+    case 'elimination':
+      return <EliminationScreen />;
+    case 'guess':
+      return <GuessScreen />;
     case 'results':
       return <ResultsScreen />;
     default:

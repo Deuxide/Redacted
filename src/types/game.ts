@@ -1,6 +1,6 @@
 export type Role = 'civilian' | 'undercover' | 'doesntKnow';
 
-export type AppScreen = 'home' | 'setup' | 'settings' | 'word-sets' | 'editor' | 'import' | 'export' | 'reveal' | 'discussion' | 'voting' | 'results';
+export type AppScreen = 'home' | 'setup' | 'settings' | 'word-sets' | 'editor' | 'import' | 'export' | 'reveal' | 'discussion' | 'voting' | 'elimination' | 'guess' | 'results';
 
 export interface WordGroup {
   id: string;
@@ -34,15 +34,25 @@ export interface SetupDraft {
   players: PlayerDraft[];
 }
 
+export type DoesntKnowGuess = 'pending' | 'correct' | 'incorrect';
+
 export interface AssignedPlayer {
   id: string;
   name: string;
   role: Role;
   word: string;
   hasSeenWord: boolean;
+  eliminated: boolean;
+  doesntKnowGuess?: DoesntKnowGuess;
+  individualWins: number;
 }
 
-export type GamePhase = 'reveal' | 'discussion' | 'voting' | 'results';
+export interface EliminationRecord {
+  playerId: string;
+  round: number;
+}
+
+export type GamePhase = 'reveal' | 'discussion' | 'voting' | 'elimination' | 'guess' | 'results';
 
 export interface ActiveGame {
   id: string;
@@ -58,6 +68,9 @@ export interface ActiveGame {
   tieBehavior: TieBehavior;
   showRoleDuringReveal: boolean;
   votes: Record<string, string[]>;
+  round: number;
+  eliminations: EliminationRecord[];
+  pointsAwarded: boolean;
   phase: GamePhase;
 }
 

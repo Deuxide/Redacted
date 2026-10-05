@@ -6,6 +6,8 @@ const SESSION_KEY = 'undercover.activeGame.v1';
 export function screenForPhase(phase: ActiveGame['phase']): AppScreen {
   if (phase === 'discussion') return 'discussion';
   if (phase === 'voting') return 'voting';
+  if (phase === 'elimination') return 'elimination';
+  if (phase === 'guess') return 'guess';
   if (phase === 'results') return 'results';
   return 'reveal';
 }
@@ -47,10 +49,11 @@ function sanitizeGame(value: unknown): ActiveGame | null {
       player.role === 'undercover' || player.role === 'civilian' || player.role === 'doesntKnow' ? player.role : null;
     if (!role || typeof player.id !== 'string' || typeof player.name !== 'string' || typeof player.word !== 'string') return [];
     if (role !== 'doesntKnow' && !player.word) return [];
-    return [{ id: player.id, name: player.name, role, word: role === 'doesntKnow' ? '' : player.word, hasSeenWord: player.hasSeenWord === true }];
+    const guess: 'pending' | 'correct' | 'incorrect' | undefined = player.doesntKnowGuess === 'pending' || player.doesntKnowGuess === 'correct' || player.doesntKnowGuess === 'incorrect' ? player.doesntKnowGuess : undefined;
+    return [{ id: player.id, name: player.name, role, word: role === 'doesntKnow' ? '' : player.word, hasSeenWord: player.hasSeenWord === true, eliminated: player.eliminated === true, doesntKnowGuess: guess, individualWins: typeof player.individualWins === 'number' ? player.individualWins : guess === 'correct' ? 1 : 0 }];
   });
   if (players.length !== value.players.length) return null;
-  const phase = value.phase === 'discussion' || value.phase === 'voting' || value.phase === 'results' ? value.phase : 'reveal';
+  const phase = value.phase === 'discussion' || value.phase === 'voting' || value.phase === 'elimination' || value.phase === 'guess' || value.phase === 'results' ? value.phase : 'reveal';
   const specialCount = players.filter((player) => player.role !== 'civilian').length || 1;
   const suspectsPerVote = Math.min(
     maxSuspects(specialCount, players.length),
@@ -62,7 +65,7 @@ function sanitizeGame(value: unknown): ActiveGame | null {
     for (const player of players) {
       const choice = value.votes[player.id];
       const picked = Array.isArray(choice) ? choice : typeof choice === 'string' ? [choice] : [];
-      const valid = [...new Set(picked.filter((id) => typeof id === 'string' && id !== player.id && players.some((candidate) => candidate.id === id)))];
+      const valid = [...new Set(picked.filter((id) => id === 'skip' || (typeof id === 'string' && id !== player.id && players.some((candidate) => candidate.id === id && !candidate.eliminated))))];
       if (valid.length) votes[player.id] = valid.slice(0, suspectsPerVote);
     }
   }
@@ -82,7 +85,12 @@ function sanitizeGame(value: unknown): ActiveGame | null {
     tieBehavior,
     showRoleDuringReveal: value.showRoleDuringReveal !== false,
     votes,
-    phase: phase === 'results' && votedCount < players.length ? 'voting' : phase,
+    round: typeof value.round === 'number' && value.round > 0 ? Math.round(value.round) : 1,
+    eliminations: Array.isArray(value.eliminations)
+      ? value.eliminations.flatMap((item) => (isRecord(item) && typeof item.playerId === 'string' ? [{ playerId: item.playerId, round: typeof item.round === 'number' ? item.round : 1 }] : []))
+      : [],
+    pointsAwarded: value.pointsAwarded === true,
+    phase: phase === 'results' && votedCount < players.filter((player) => !player.eliminated).length && players.some((player) => !player.eliminated) ? 'voting' : phase,
   };
 }
 

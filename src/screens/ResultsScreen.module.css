@@ -18,8 +18,14 @@
   border: 2px solid var(--undercover);
 }
 
+.draw {
+  background: #243044;
+  border: 2px solid var(--color-border);
+}
+
 .win h2,
 .lose h2,
+.draw h2,
 .civilianCard p,
 .undercoverCard p,
 .blankCard p {
@@ -30,6 +36,7 @@
 
 .win p,
 .lose p,
+.draw p,
 .person p {
   margin: 0.25rem 0;
 }
