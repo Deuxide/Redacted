@@ -1,0 +1,121 @@
+.player {
+  margin: 0;
+  font-size: clamp(2rem, 10vw, 3.2rem);
+  line-height: 1.05;
+}
+
+.step {
+  margin: 0;
+  color: var(--accent);
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.copy,
+.meta {
+  margin: 0;
+  color: var(--muted);
+  font-size: 1.05rem;
+}
+
+.warning,
+.handoff {
+  margin: 0;
+  font-size: 1.35rem;
+  font-weight: 800;
+  line-height: 1.25;
+}
+
+.warning {
+  color: var(--accent);
+}
+
+.handoff {
+  font-size: clamp(2rem, 9vw, 3rem);
+}
+
+.secret {
+  border: 1px solid var(--line);
+  border-radius: 1.2rem;
+  background: var(--card);
+  padding: 1.4rem 1rem;
+  text-align: center;
+}
+
+.secret span {
+  display: block;
+  margin-top: 0.8rem;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 0.85rem;
+  font-weight: 800;
+}
+
+.secret span:first-child {
+  margin-top: 0;
+}
+
+.role,
+.civilian,
+.undercover {
+  display: block;
+  margin-top: 0.25rem;
+  font-size: 1.6rem;
+}
+
+.civilian {
+  color: var(--civilian);
+}
+
+.undercover {
+  color: var(--undercover);
+}
+
+.word {
+  display: block;
+  margin-top: 0.2rem;
+  font-size: clamp(2.8rem, 14vw, 4.8rem);
+  line-height: 0.95;
+  overflow-wrap: anywhere;
+}
+
+.reveal,
+.pass,
+.choice {
+  width: 100%;
+  min-height: 3.6rem;
+  border-radius: 1rem;
+  font: inherit;
+  font-size: 1.15rem;
+  font-weight: 800;
+}
+
+.reveal {
+  border: 0;
+  background: var(--accent);
+  color: #1b1403;
+}
+
+.reveal:disabled {
+  opacity: 0.45;
+}
+
+.pass,
+.choice {
+  border: 1px solid var(--line);
+  background: var(--card);
+  color: var(--text);
+}
+
+.choice[aria-pressed='true'] {
+  border-color: var(--accent);
+  background: #2a2416;
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}

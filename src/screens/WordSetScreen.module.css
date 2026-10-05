@@ -1,0 +1,158 @@
+.note,
+.ok,
+.warn {
+  margin: 0;
+}
+
+.note {
+  color: var(--muted);
+}
+
+.ok {
+  color: #8fd0a8;
+}
+
+.warn {
+  color: var(--danger);
+  font-weight: 700;
+}
+
+.row,
+.actions,
+.wordRow {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.primary,
+.secondary,
+.file,
+.actions button,
+.wordRow button,
+.set,
+.selected {
+  border-radius: 0.85rem;
+  font: inherit;
+}
+
+.primary,
+.secondary,
+.file {
+  min-height: 3rem;
+  font-weight: 800;
+}
+
+.primary {
+  border: 0;
+  background: var(--accent);
+  color: #1b1403;
+}
+
+.secondary,
+.file,
+.actions button,
+.wordRow button,
+.set {
+  border: 1px solid var(--line);
+  background: var(--card);
+  color: var(--text);
+}
+
+.file {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.file input {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+}
+
+.card {
+  border: 1px solid var(--line);
+  border-radius: 1rem;
+  background: var(--card);
+  padding: 0.9rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+}
+
+.card h2 {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.card p,
+.card small {
+  margin: 0;
+  color: var(--muted);
+}
+
+.danger {
+  color: #ffb4a8;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.field input,
+.field textarea,
+.wordRow input {
+  width: 100%;
+  border: 1px solid var(--line);
+  border-radius: 0.85rem;
+  background: var(--bg);
+  color: var(--text);
+  padding: 0.75rem;
+  font: inherit;
+}
+
+.wordRow input {
+  flex: 1;
+}
+
+.sets {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+}
+
+.set,
+.selected {
+  text-align: left;
+  padding: 0.8rem;
+}
+
+.selected {
+  border: 2px solid var(--accent);
+  background: #2a2416;
+  color: var(--text);
+}
+
+.set strong,
+.selected strong,
+.set small,
+.selected small {
+  display: block;
+}
+
+.sample {
+  margin: 0;
+  padding: 0.8rem;
+  overflow: auto;
+  border-radius: 0.85rem;
+  background: var(--card);
+  color: var(--muted);
+  font-size: 0.8rem;
+}

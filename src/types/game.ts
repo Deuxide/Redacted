@@ -1,0 +1,96 @@
+export type Role = 'civilian' | 'undercover';
+
+export type AppScreen = 'home' | 'setup' | 'word-sets' | 'editor' | 'import' | 'export' | 'reveal' | 'discussion' | 'voting' | 'results';
+
+export interface WordGroup {
+  id: string;
+  label?: string;
+  words: string[];
+}
+
+export interface WordSet {
+  id: string;
+  name: string;
+  description: string;
+  groups: WordGroup[];
+  builtin: boolean;
+}
+
+export interface PlayerDraft {
+  id: string;
+  name: string;
+}
+
+export type TieBehavior = 'eliminate-none' | 'revote';
+
+export interface SetupDraft {
+  playerCount: number;
+  undercoverCount: number;
+  suspectsPerVote: number;
+  tieBehavior: TieBehavior;
+  wordSetId: string;
+  players: PlayerDraft[];
+}
+
+export interface AssignedPlayer {
+  id: string;
+  name: string;
+  role: Role;
+  word: string;
+  hasSeenWord: boolean;
+}
+
+export type GamePhase = 'reveal' | 'discussion' | 'voting' | 'results';
+
+export interface ActiveGame {
+  id: string;
+  startedAt: string;
+  wordSetId: string;
+  wordSetName: string;
+  civilianWord: string;
+  undercoverWord: string;
+  players: AssignedPlayer[];
+  revealIndex: number;
+  voteIndex: number;
+  suspectsPerVote: number;
+  tieBehavior: TieBehavior;
+  votes: Record<string, string[]>;
+  phase: GamePhase;
+}
+
+export const MIN_PLAYERS = 3;
+export const MAX_PLAYERS = 30;
+export const MIN_UNDERCOVER = 1;
+export const MIN_WORDS_PER_GROUP = 2;
+
+export function maxUndercover(playerCount: number): number {
+  return Math.max(MIN_UNDERCOVER, playerCount - 2);
+}
+
+export function maxSuspects(undercoverCount: number, playerCount: number): number {
+  return Math.max(1, Math.min(undercoverCount, playerCount - 1));
+}
+
+export function suggestedUndercover(playerCount: number): { min: number; max: number } {
+  const cap = maxUndercover(playerCount);
+  if (playerCount <= 5) return { min: 1, max: 1 };
+  if (playerCount <= 10) return { min: 1, max: Math.min(2, cap) };
+  return { min: Math.min(2, cap), max: Math.min(3, cap) };
+}
+
+export function playableGroups(set: WordSet): WordGroup[] {
+  return set.groups.filter((group) => uniqueWords(group.words).length >= MIN_WORDS_PER_GROUP);
+}
+
+export function uniqueWords(words: string[]): string[] {
+  const seen = new Set<string>();
+  const unique: string[] = [];
+  for (const word of words) {
+    const cleaned = word.trim().replace(/\s+/g, ' ');
+    const key = cleaned.toLocaleLowerCase();
+    if (!cleaned || seen.has(key)) continue;
+    seen.add(key);
+    unique.push(cleaned);
+  }
+  return unique;
+}

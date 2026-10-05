@@ -1,0 +1,74 @@
+:root {
+  --bg: #10151c;
+  --card: #1b2430;
+  --raised: #283446;
+  --text: #f6f3ec;
+  --muted: #a7b1bd;
+  --line: #334155;
+  --accent: #f0b429;
+  --danger: #ff8f82;
+  --civilian: #7ddea8;
+  --undercover: #ff8f82;
+  --focus: #ffe08a;
+  color: var(--text);
+  background: var(--bg);
+  font-family: "Segoe UI", system-ui, sans-serif;
+  line-height: 1.4;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100dvh;
+  overscroll-behavior: none;
+  background:
+    radial-gradient(circle at top, #1d2938 0, transparent 28rem),
+    var(--bg);
+}
+
+button,
+input {
+  touch-action: manipulation;
+}
+
+button {
+  cursor: pointer;
+}
+
+button:focus-visible,
+input:focus-visible,
+a:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 3px;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  main {
+    animation: rise 220ms ease;
+  }
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+a {
+  color: var(--accent);
+}
+
+#root {
+  min-height: 100dvh;
+}

@@ -1,0 +1,155 @@
+.start {
+  width: 100%;
+  min-height: 3.25rem;
+  border: 0;
+  border-radius: 1rem;
+  background: var(--accent);
+  color: #1b1403;
+  font: inherit;
+  font-weight: 800;
+}
+
+.start:disabled {
+  opacity: 0.45;
+}
+
+.recommend {
+  margin: 0;
+  padding: 0.85rem;
+  border-radius: 1rem;
+  background: #2a2416;
+  border: 1px solid var(--accent);
+  font-weight: 800;
+}
+
+.names {
+  max-height: 42dvh;
+  overflow: auto;
+  padding-right: 0.15rem;
+}
+
+.nameRow {
+  display: flex;
+  gap: 0.45rem;
+}
+
+.nameRow input {
+  flex: 1;
+  width: auto;
+  min-width: 0;
+}
+
+.nameRow button {
+  border: 1px solid var(--line);
+  border-radius: 0.85rem;
+  background: var(--raised);
+  color: var(--text);
+  min-width: 5.5rem;
+  font: inherit;
+  font-weight: 700;
+}
+
+.suggest {
+  border: 1px solid var(--line);
+  border-radius: 0.85rem;
+  background: var(--card);
+  color: var(--text);
+  min-height: 2.75rem;
+  font: inherit;
+  font-weight: 700;
+}
+
+.suggest:disabled,
+.nameRow button:disabled {
+  opacity: 0.4;
+}
+
+.hint {
+  margin: 0.45rem 0 0;
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.error {
+  margin: 0;
+  color: var(--danger);
+  font-weight: 700;
+}
+
+.block h2 {
+  margin: 0 0 0.65rem;
+  font-size: 1rem;
+}
+
+.block ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.block li {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.block label {
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.block input {
+  width: 100%;
+  min-height: 3rem;
+  border: 1px solid var(--line);
+  border-radius: 0.85rem;
+  background: var(--card);
+  color: var(--text);
+  padding: 0 0.85rem;
+  font: inherit;
+}
+
+.sets {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.set,
+.selected {
+  text-align: left;
+  border-radius: 1rem;
+  padding: 0.85rem;
+  font: inherit;
+  color: var(--text);
+}
+
+.set {
+  border: 1px solid var(--line);
+  background: var(--card);
+}
+
+.selected {
+  border: 2px solid var(--accent);
+  background: #2a2416;
+}
+
+.set strong,
+.selected strong,
+.set span,
+.selected span,
+.set small,
+.selected small {
+  display: block;
+}
+
+.set span,
+.selected span,
+.set small,
+.selected small {
+  margin-top: 0.25rem;
+  color: var(--muted);
+}

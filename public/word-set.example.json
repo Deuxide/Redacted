@@ -1,0 +1,9 @@
+{
+  "version": 1,
+  "name": "Fruits",
+  "description": "Example word set",
+  "groups": [
+    { "id": "fruit-001", "label": "Fruit", "words": ["Apple", "Orange", "Banana"] },
+    { "id": "pets-001", "label": "Pets", "words": ["Cat", "Dog"] }
+  ]
+}
