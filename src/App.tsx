@@ -1,4 +1,4 @@
-import { LanguageProvider } from './i18n/LanguageProvider';
+import { FullscreenButton } from './components/FullscreenButton';
 import { ThemeProvider } from './theme/ThemeProvider';
 import { DiscussionScreen } from './screens/DiscussionScreen';
 import { EliminationScreen } from './screens/EliminationScreen';
@@ -52,6 +52,7 @@ export default function App() {
     <ThemeProvider>
       <LanguageProvider>
         <GameProvider>
+          <FullscreenButton />
           <AppRouter />
         </GameProvider>
       </LanguageProvider>
