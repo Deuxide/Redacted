@@ -3,8 +3,8 @@
   min-height: 3.25rem;
   border: 0;
   border-radius: 1rem;
-  background: var(--accent);
-  color: #1b1403;
+  background: var(--color-primary);
+  color: var(--on-accent);
   font: inherit;
   font-weight: 800;
 }
@@ -17,7 +17,7 @@
   margin: 0;
   padding: 0.85rem;
   border-radius: 1rem;
-  background: #2a2416;
+  background: color-mix(in srgb, var(--color-primary) 18%, var(--color-surface));
   border: 1px solid var(--accent);
   font-weight: 800;
 }
@@ -134,7 +134,7 @@
 
 .selected {
   border: 2px solid var(--accent);
-  background: #2a2416;
+  background: color-mix(in srgb, var(--color-primary) 18%, var(--color-surface));
 }
 
 .set strong,

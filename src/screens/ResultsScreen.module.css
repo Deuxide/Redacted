@@ -100,8 +100,8 @@
 
 .primary {
   border: 0;
-  background: var(--accent);
-  color: #1b1403;
+  background: var(--color-primary);
+  color: var(--on-accent);
 }
 
 .secondary {

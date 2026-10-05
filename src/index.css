@@ -1,17 +1,33 @@
 :root {
-  --bg: #10151c;
-  --card: #1b2430;
-  --raised: #283446;
-  --text: #f6f3ec;
-  --muted: #a7b1bd;
-  --line: #334155;
-  --accent: #f0b429;
-  --danger: #ff8f82;
+  --color-background: #10151c;
+  --color-surface: #1b2430;
+  --color-surface-secondary: #283446;
+  --color-text: #f6f3ec;
+  --color-text-secondary: #a7b1bd;
+  --color-border: #334155;
+  --color-primary: #f0b429;
+  --color-primary-text: #1b1403;
+  --color-danger: #ff8f82;
+  --color-success: #7ddea8;
+  --color-warning: #f0b429;
+  --bg: var(--color-background);
+  --card: var(--color-surface);
+  --raised: var(--color-surface-secondary);
+  --text: var(--color-text);
+  --muted: var(--color-text-secondary);
+  --line: var(--color-border);
+  --accent: var(--color-primary);
+  --on-accent: var(--color-primary-text);
+  --danger: var(--color-danger);
   --civilian: #7ddea8;
   --undercover: #ff8f82;
-  --focus: #ffe08a;
-  color: var(--text);
-  background: var(--bg);
+  --focus: var(--color-primary);
+  --radius: 1rem;
+  --space: 0.85rem;
+  --shadow: 0 10px 24px rgba(0, 0, 0, 0.22);
+  --transition: 140ms ease;
+  color: var(--color-text);
+  background: var(--color-background);
   font-family: "Segoe UI", system-ui, sans-serif;
   line-height: 1.4;
   font-synthesis: none;
@@ -33,19 +49,45 @@ body {
 }
 
 button,
-input {
+input,
+select,
+textarea {
   touch-action: manipulation;
 }
 
 button {
   cursor: pointer;
+  transition: transform var(--transition), filter var(--transition), background var(--transition);
+}
+
+button:hover {
+  filter: brightness(1.06);
+}
+
+button:active {
+  transform: translateY(1px);
+}
+
+button:disabled {
+  cursor: not-allowed;
+  filter: none;
+  transform: none;
 }
 
 button:focus-visible,
 input:focus-visible,
+select:focus-visible,
 a:focus-visible {
   outline: 3px solid var(--focus);
   outline-offset: 3px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  button,
+  main {
+    animation: none;
+    transition: none;
+  }
 }
 
 @media (prefers-reduced-motion: no-preference) {
@@ -71,4 +113,12 @@ a {
 
 #root {
   min-height: 100dvh;
+}
+
+h1,
+h2,
+p,
+button,
+li {
+  overflow-wrap: anywhere;
 }

@@ -45,8 +45,8 @@
 
 .primary {
   border: 0;
-  background: var(--accent);
-  color: #1b1403;
+  background: var(--color-primary);
+  color: var(--on-accent);
 }
 
 .secondary,
@@ -136,7 +136,7 @@
 
 .selected {
   border: 2px solid var(--accent);
-  background: #2a2416;
+  background: color-mix(in srgb, var(--color-primary) 18%, var(--color-surface));
   color: var(--text);
 }
 

@@ -1,5 +1,6 @@
 import { LanguageSwitcher } from '../components/LanguageSwitcher';
 import { ScreenShell } from '../components/ScreenShell';
+import { ThemePicker } from '../components/ThemePicker';
 import { useI18n } from '../i18n/LanguageProvider';
 import { useGame } from '../state/GameProvider';
 import styles from './HomeScreen.module.css';
@@ -36,7 +37,11 @@ export function SettingsScreen() {
   const { t } = useI18n();
   return (
     <ScreenShell title={t('settings')} subtitle={t('settingsHint')} onBack={goHome}>
-      <LanguageSwitcher />
+      <section className={styles.section}>
+        <h2>{t('languageSection')}</h2>
+        <LanguageSwitcher />
+      </section>
+      <ThemePicker />
     </ScreenShell>
   );
 }

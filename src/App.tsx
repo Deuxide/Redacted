@@ -1,4 +1,5 @@
 import { LanguageProvider } from './i18n/LanguageProvider';
+import { ThemeProvider } from './theme/ThemeProvider';
 import { DiscussionScreen } from './screens/DiscussionScreen';
 import { ExportScreen } from './screens/ExportScreen';
 import { HomeScreen, SettingsScreen } from './screens/HomeScreen';
@@ -42,10 +43,12 @@ function AppRouter() {
 
 export default function App() {
   return (
-    <LanguageProvider>
-      <GameProvider>
-        <AppRouter />
-      </GameProvider>
-    </LanguageProvider>
+    <ThemeProvider>
+      <LanguageProvider>
+        <GameProvider>
+          <AppRouter />
+        </GameProvider>
+      </LanguageProvider>
+    </ThemeProvider>
   );
 }

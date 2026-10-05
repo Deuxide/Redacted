@@ -79,8 +79,8 @@
 
 .word {
   display: block;
-  margin-top: 0.2rem;
-  font-size: clamp(2.8rem, 14vw, 4.8rem);
+  margin-top: 0.35rem;
+  font-size: clamp(3.2rem, 16vw, 5.4rem);
   line-height: 0.95;
   overflow-wrap: anywhere;
 }
@@ -98,8 +98,8 @@
 
 .reveal {
   border: 0;
-  background: var(--accent);
-  color: #1b1403;
+  background: var(--color-primary);
+  color: var(--on-accent);
 }
 
 .reveal:disabled {
@@ -115,7 +115,7 @@
 
 .choice[aria-pressed='true'] {
   border-color: var(--accent);
-  background: #2a2416;
+  background: color-mix(in srgb, var(--color-primary) 24%, var(--color-surface));
 }
 
 .list {
