@@ -48,7 +48,7 @@ export function downloadWordSet(set: WordSet): { ok: true } | { ok: false; error
     })),
   };
   if (!file.groups.length) {
-    return { ok: false, error: 'Add at least one group with 2 different words before exporting.' };
+    return { ok: false, error: 'exportNeedsWords' };
   }
   const blob = new Blob([`${JSON.stringify(file, null, 2)}\n`], { type: 'application/json' });
   const url = URL.createObjectURL(blob);

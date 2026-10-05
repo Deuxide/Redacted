@@ -73,6 +73,10 @@
   color: var(--undercover);
 }
 
+.unknown {
+  color: #9ec5ff;
+}
+
 .word {
   display: block;
   margin-top: 0.2rem;

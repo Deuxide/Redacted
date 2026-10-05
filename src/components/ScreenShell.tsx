@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import { useI18n } from '../i18n/LanguageProvider';
 import styles from './ScreenShell.module.css';
 
 interface ScreenShellProps {
@@ -10,12 +11,13 @@ interface ScreenShellProps {
 }
 
 export function ScreenShell({ title, subtitle, onBack, children, footer }: ScreenShellProps) {
+  const { t } = useI18n();
   return (
     <main className={styles.shell}>
       <header className={styles.header}>
         {onBack ? (
           <button type="button" className={styles.back} onClick={onBack}>
-            Back
+            {t('back')}
           </button>
         ) : (
           <span className={styles.brand}>Undercover</span>

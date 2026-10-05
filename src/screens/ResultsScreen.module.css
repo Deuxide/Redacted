@@ -1,45 +1,92 @@
-.block {
-  border: 1px solid var(--line);
+.win,
+.lose,
+.civilianCard,
+.undercoverCard,
+.blankCard,
+.person {
   border-radius: 1rem;
-  background: var(--card);
-  padding: 0.9rem;
+  padding: 1rem;
 }
 
-.block h2 {
-  margin: 0.8rem 0 0.25rem;
+.win {
+  background: #173526;
+  border: 2px solid var(--civilian);
+}
+
+.lose {
+  background: #3a221f;
+  border: 2px solid var(--undercover);
+}
+
+.win h2,
+.lose h2,
+.civilianCard p,
+.undercoverCard p,
+.blankCard p {
+  margin: 0.25rem 0;
+  font-size: clamp(1.8rem, 8vw, 2.6rem);
+  line-height: 1.05;
+}
+
+.win p,
+.lose p,
+.person p {
+  margin: 0.25rem 0;
+}
+
+.words,
+.people {
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+}
+
+.civilianCard {
+  background: #173526;
+}
+
+.undercoverCard {
+  background: #3a221f;
+}
+
+.blankCard {
+  background: #1c2b40;
+}
+
+.civilianCard h2,
+.undercoverCard h2,
+.blankCard h2,
+.section {
+  margin: 0;
+  color: var(--muted);
   font-size: 0.85rem;
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: var(--muted);
 }
 
-.block h2:first-child {
-  margin-top: 0;
+.person {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  background: var(--card);
+  border: 1px solid var(--line);
 }
 
-.block p,
-.block li {
-  margin: 0.2rem 0;
-  font-size: 1.15rem;
-  font-weight: 700;
+.person strong {
+  font-size: 1.25rem;
 }
 
-.word {
-  font-size: clamp(1.8rem, 8vw, 2.6rem);
-}
-
-.block ul {
-  list-style: none;
+.tie {
   margin: 0;
-  padding: 0;
+  color: var(--accent);
+  font-size: 1.4rem;
+  font-weight: 800;
 }
 
-.civilian {
-  color: var(--civilian);
-}
-
-.undercover {
-  color: var(--undercover);
+.rank {
+  margin: 0;
+  padding-left: 1.2rem;
+  font-size: 1.05rem;
 }
 
 .primary,

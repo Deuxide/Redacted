@@ -3,8 +3,10 @@ import type { ActiveGame, AppScreen, SetupDraft, WordSet } from '../types/game';
 import { playableGroups } from '../types/game';
 import { BUILTIN_WORD_SET } from '../data/builtinWordSets';
 import { createActiveGame } from '../game/createGame';
-import { addPlayer, clampSuspects, clampUndercoverCount, loadDraft, removePlayer, resizePlayers, saveDraft } from '../game/draft';
+import { addPlayer, balanceRoles, clampSuspects, loadDraft, removePlayer, resizePlayers, saveDraft } from '../game/draft';
 import { clearSessionGame, loadSessionGame, saveSessionGame, screenForPhase } from '../game/sessionGame';
+import { useI18n } from '../i18n/LanguageProvider';
+import type { MessageKey } from '../i18n/messages';
 import { blankSet, duplicateSet } from '../wordSets/mutate';
 import { createId } from '../wordSets/ids';
 import { loadCustomSets, saveCustomSets } from '../wordSets/storage';
@@ -16,9 +18,10 @@ interface GameContextValue {
   wordSets: WordSet[];
   selectedSet: WordSet;
   editingSet: WordSet | null;
-  startError: string | null;
+  startError: MessageKey | null;
   goHome: () => void;
   openSetup: () => void;
+  openSettings: () => void;
   openWordSets: () => void;
   openImport: () => void;
   openExport: () => void;
@@ -27,8 +30,10 @@ interface GameContextValue {
   addPlayer: () => void;
   removePlayer: (playerId: string) => void;
   setUndercoverCount: (count: number) => void;
+  setDoesntKnowCount: (count: number) => void;
   setSuspectsPerVote: (count: number) => void;
   setTieBehavior: (tieBehavior: SetupDraft['tieBehavior']) => void;
+  setShowRoleDuringReveal: (show: boolean) => void;
   setWordSetId: (wordSetId: string) => void;
   setPlayerName: (playerId: string, name: string) => void;
   startGame: () => void;
@@ -57,13 +62,14 @@ function updateDraft(setter: (current: SetupDraft) => SetupDraft) {
 }
 
 export function GameProvider({ children }: { children: ReactNode }) {
+  const { t } = useI18n();
   const restored = useMemo(() => loadSessionGame(), []);
   const [screen, setScreen] = useState<AppScreen>(() => (restored ? screenForPhase(restored.phase) : 'home'));
   const [draft, setDraft] = useState<SetupDraft>(() => loadDraft());
   const [game, setGame] = useState<ActiveGame | null>(restored);
   const [customSets, setCustomSets] = useState<WordSet[]>(() => loadCustomSets());
   const [editingSetId, setEditingSetId] = useState<string | null>(null);
-  const [startError, setStartError] = useState<string | null>(null);
+  const [startError, setStartError] = useState<MessageKey | null>(null);
 
   const wordSets = useMemo(() => [BUILTIN_WORD_SET, ...customSets], [customSets]);
   const selectedSet = wordSets.find((set) => set.id === draft.wordSetId) ?? BUILTIN_WORD_SET;
@@ -99,7 +105,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
 
   function leaveGame() {
     if (game && game.phase !== 'results') {
-      const leave = window.confirm('Leave this game? The secret words will be cleared from the screen.');
+      const leave = window.confirm(t('leaveConfirm'));
       if (!leave) return;
     }
     setGame(null);
@@ -120,6 +126,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
         setStartError(null);
         setScreen('setup');
       },
+      openSettings: () => setScreen('settings'),
       openWordSets: () => setScreen('word-sets'),
       openImport: () => setScreen('import'),
       openExport: () => setScreen('export'),
@@ -133,11 +140,22 @@ export function GameProvider({ children }: { children: ReactNode }) {
       setUndercoverCount: (count) =>
         setDraft(
           updateDraft((current) => {
-            const undercoverCount = clampUndercoverCount(count, current.playerCount);
+            const roles = balanceRoles(current.playerCount, count, current.doesntKnowCount, 'undercover');
             return {
               ...current,
-              undercoverCount,
-              suspectsPerVote: clampSuspects(current.suspectsPerVote, undercoverCount, current.playerCount),
+              ...roles,
+              suspectsPerVote: clampSuspects(current.suspectsPerVote, roles.undercoverCount + roles.doesntKnowCount, current.playerCount),
+            };
+          }),
+        ),
+      setDoesntKnowCount: (count) =>
+        setDraft(
+          updateDraft((current) => {
+            const roles = balanceRoles(current.playerCount, current.undercoverCount, count, 'doesntKnow');
+            return {
+              ...current,
+              ...roles,
+              suspectsPerVote: clampSuspects(current.suspectsPerVote, roles.undercoverCount + roles.doesntKnowCount, current.playerCount),
             };
           }),
         ),
@@ -145,10 +163,11 @@ export function GameProvider({ children }: { children: ReactNode }) {
         setDraft(
           updateDraft((current) => ({
             ...current,
-            suspectsPerVote: clampSuspects(count, current.undercoverCount, current.playerCount),
+            suspectsPerVote: clampSuspects(count, current.undercoverCount + current.doesntKnowCount, current.playerCount),
           })),
         ),
       setTieBehavior: (tieBehavior) => setDraft(updateDraft((current) => ({ ...current, tieBehavior }))),
+      setShowRoleDuringReveal: (show) => setDraft(updateDraft((current) => ({ ...current, showRoleDuringReveal: show }))),
       setWordSetId: (wordSetId) => {
         setStartError(null);
         setDraft(updateDraft((current) => ({ ...current, wordSetId })));
@@ -162,12 +181,12 @@ export function GameProvider({ children }: { children: ReactNode }) {
         ),
       startGame: () => {
         if (!playableGroups(selectedSet).length) {
-          setStartError('This word set needs a group with at least 2 different words.');
+          setStartError('needWords');
           return;
         }
         const nextGame = createActiveGame({ ...draft, wordSetId: selectedSet.id }, selectedSet);
         if (!nextGame) {
-          setStartError('Could not pick two different words from this set.');
+          setStartError('pickFailed');
           return;
         }
         setStartError(null);
@@ -221,8 +240,10 @@ export function GameProvider({ children }: { children: ReactNode }) {
           {
             playerCount: source.players.length,
             undercoverCount: source.players.filter((player) => player.role === 'undercover').length,
+            doesntKnowCount: source.players.filter((player) => player.role === 'doesntKnow').length,
             suspectsPerVote: source.suspectsPerVote,
             tieBehavior: source.tieBehavior,
+            showRoleDuringReveal: source.showRoleDuringReveal,
             wordSetId: set.id,
             players: source.players.map((player) => ({ id: player.id, name: player.name })),
           },
@@ -279,7 +300,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
         setScreen('word-sets');
       },
     };
-  }, [customSets, draft, editingSet, editingSetId, game, screen, selectedSet, startError, wordSets]);
+  }, [customSets, draft, editingSet, editingSetId, game, screen, selectedSet, startError, t, wordSets]);
 
   return <GameContext.Provider value={value}>{children}</GameContext.Provider>;
 }

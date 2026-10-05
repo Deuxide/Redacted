@@ -1,5 +1,5 @@
 import type { SetupDraft, TieBehavior } from '../types/game';
-import { MAX_PLAYERS, MIN_PLAYERS, MIN_UNDERCOVER, maxSuspects, maxUndercover } from '../types/game';
+import { MAX_PLAYERS, MIN_CIVILIANS, MIN_PLAYERS, MIN_UNDERCOVER, maxDoesntKnow, maxSuspects, maxUndercover } from '../types/game';
 import { BUILTIN_SET_ID } from '../data/builtinWordSets';
 import { createId } from '../wordSets/ids';
 
@@ -14,8 +14,10 @@ export function createDefaultDraft(): SetupDraft {
   return {
     playerCount,
     undercoverCount: 1,
+    doesntKnowCount: 0,
     suspectsPerVote: 1,
     tieBehavior: 'eliminate-none',
+    showRoleDuringReveal: true,
     wordSetId: BUILTIN_SET_ID,
     players: Array.from({ length: playerCount }, (_, index) => ({
       id: createPlayerId(),
@@ -28,8 +30,27 @@ export function clampPlayerCount(value: number): number {
   return Math.min(MAX_PLAYERS, Math.max(MIN_PLAYERS, Math.round(value)));
 }
 
-export function clampUndercoverCount(value: number, playerCount: number): number {
-  return Math.min(maxUndercover(playerCount), Math.max(MIN_UNDERCOVER, Math.round(value)));
+export function clampUndercoverCount(value: number, playerCount: number, doesntKnowCount = 0): number {
+  return Math.min(maxUndercover(playerCount, doesntKnowCount), Math.max(MIN_UNDERCOVER, Math.round(value)));
+}
+
+export function clampDoesntKnowCount(value: number, playerCount: number, undercoverCount: number): number {
+  return Math.min(maxDoesntKnow(playerCount, undercoverCount), Math.max(0, Math.round(value)));
+}
+
+export function balanceRoles(
+  playerCount: number,
+  undercoverCount: number,
+  doesntKnowCount: number,
+  priority: 'undercover' | 'doesntKnow' = 'undercover',
+): { undercoverCount: number; doesntKnowCount: number } {
+  let undercover = Math.min(Math.max(MIN_UNDERCOVER, Math.round(undercoverCount)), playerCount - MIN_CIVILIANS);
+  let doesntKnow = Math.min(Math.max(0, Math.round(doesntKnowCount)), playerCount - MIN_CIVILIANS);
+  if (undercover + doesntKnow > playerCount - MIN_CIVILIANS) {
+    if (priority === 'doesntKnow') undercover = Math.max(MIN_UNDERCOVER, playerCount - MIN_CIVILIANS - doesntKnow);
+    else doesntKnow = Math.max(0, playerCount - MIN_CIVILIANS - undercover);
+  }
+  return { undercoverCount: undercover, doesntKnowCount: doesntKnow };
 }
 
 export function clampSuspects(value: number, undercoverCount: number, playerCount: number): number {
@@ -64,12 +85,13 @@ export function resizePlayers(draft: SetupDraft, nextCount: number): SetupDraft 
     const index = players.length;
     players.push({ id: createPlayerId(), name: `Player ${index + 1}` });
   }
-  const undercoverCount = clampUndercoverCount(draft.undercoverCount, playerCount);
+  const roles = balanceRoles(playerCount, draft.undercoverCount, draft.doesntKnowCount);
   return {
     ...draft,
     playerCount,
-    undercoverCount,
-    suspectsPerVote: clampSuspects(draft.suspectsPerVote, undercoverCount, playerCount),
+    undercoverCount: roles.undercoverCount,
+    doesntKnowCount: roles.doesntKnowCount,
+    suspectsPerVote: clampSuspects(draft.suspectsPerVote, roles.undercoverCount + roles.doesntKnowCount, playerCount),
     players,
   };
 }
@@ -91,13 +113,16 @@ export function loadDraft(): SetupDraft {
     const wordSetId = typeof parsed.wordSetId === 'string' && parsed.wordSetId.trim()
       ? parsed.wordSetId
       : base.wordSetId;
-    const undercoverCount = clampUndercoverCount(parsed.undercoverCount ?? 1, playerCount);
+    const requestedDoesntKnow = typeof parsed.doesntKnowCount === 'number' ? parsed.doesntKnowCount : 0;
+    const roles = balanceRoles(playerCount, parsed.undercoverCount ?? 1, requestedDoesntKnow);
     const tieBehavior: TieBehavior = parsed.tieBehavior === 'revote' ? 'revote' : 'eliminate-none';
     return {
       playerCount,
-      undercoverCount,
-      suspectsPerVote: clampSuspects(parsed.suspectsPerVote ?? 1, undercoverCount, playerCount),
+      undercoverCount: roles.undercoverCount,
+      doesntKnowCount: roles.doesntKnowCount,
+      suspectsPerVote: clampSuspects(parsed.suspectsPerVote ?? 1, roles.undercoverCount + roles.doesntKnowCount, playerCount),
       tieBehavior,
+      showRoleDuringReveal: parsed.showRoleDuringReveal !== false,
       wordSetId,
       players,
     };

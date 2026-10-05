@@ -6,6 +6,8 @@ export interface VoteLeader {
   votes: number;
 }
 
+export type SideStatus = 'caught' | 'survived' | 'none';
+
 export interface VoteTally {
   counts: Record<string, number>;
   topCount: number;
@@ -13,8 +15,17 @@ export interface VoteTally {
   tied: boolean;
   eliminatedIds: string[];
   undercoverIds: string[];
+  doesntKnowIds: string[];
+  civilians: 'win' | 'lose';
+  undercover: SideStatus;
+  doesntKnow: SideStatus;
   civiliansWin: boolean;
 }
+
+/** Change this later without rewriting the results screen. */
+export const WIN_RULES = {
+  civiliansWinIfAllSpecialRolesIdentified: true,
+};
 
 export function tallyVotes(game: ActiveGame): VoteTally {
   const counts: Record<string, number> = {};
@@ -31,6 +42,28 @@ export function tallyVotes(game: ActiveGame): VoteTally {
   const tied = leaders.length > 1;
   const eliminatedIds = tied ? [] : leaders.map((leader) => leader.id);
   const undercoverIds = game.players.filter((player) => player.role === 'undercover').map((player) => player.id);
-  const civiliansWin = eliminatedIds.length > 0 && undercoverIds.every((id) => eliminatedIds.includes(id));
-  return { counts, topCount, leaders, tied, eliminatedIds, undercoverIds, civiliansWin };
+  const doesntKnowIds = game.players.filter((player) => player.role === 'doesntKnow').map((player) => player.id);
+  const undercover = statusFor(undercoverIds, eliminatedIds);
+  const doesntKnow = statusFor(doesntKnowIds, eliminatedIds);
+  const specialIds = [...undercoverIds, ...doesntKnowIds];
+  const allSpecialIdentified = specialIds.length > 0 && specialIds.every((id) => eliminatedIds.includes(id));
+  const civiliansWin = WIN_RULES.civiliansWinIfAllSpecialRolesIdentified ? allSpecialIdentified : !allSpecialIdentified;
+  return {
+    counts,
+    topCount,
+    leaders,
+    tied,
+    eliminatedIds,
+    undercoverIds,
+    doesntKnowIds,
+    civilians: civiliansWin ? 'win' : 'lose',
+    undercover,
+    doesntKnow,
+    civiliansWin,
+  };
+}
+
+function statusFor(ids: string[], eliminatedIds: string[]): SideStatus {
+  if (!ids.length) return 'none';
+  return ids.every((id) => eliminatedIds.includes(id)) ? 'caught' : 'survived';
 }

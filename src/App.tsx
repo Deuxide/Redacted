@@ -1,7 +1,8 @@
+import { LanguageProvider } from './i18n/LanguageProvider';
 import { DiscussionScreen } from './screens/DiscussionScreen';
 import { ExportScreen } from './screens/ExportScreen';
+import { HomeScreen, SettingsScreen } from './screens/HomeScreen';
 import { ImportScreen } from './screens/ImportScreen';
-import { HomeScreen } from './screens/HomeScreen';
 import { ResultsScreen } from './screens/ResultsScreen';
 import { RevealScreen } from './screens/RevealScreen';
 import { SetupScreen } from './screens/SetupScreen';
@@ -16,6 +17,8 @@ function AppRouter() {
   switch (screen) {
     case 'setup':
       return <SetupScreen />;
+    case 'settings':
+      return <SettingsScreen />;
     case 'word-sets':
       return <WordSetsScreen />;
     case 'editor':
@@ -39,8 +42,10 @@ function AppRouter() {
 
 export default function App() {
   return (
-    <GameProvider>
-      <AppRouter />
-    </GameProvider>
+    <LanguageProvider>
+      <GameProvider>
+        <AppRouter />
+      </GameProvider>
+    </LanguageProvider>
   );
 }

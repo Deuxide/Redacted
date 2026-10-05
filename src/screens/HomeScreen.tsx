@@ -1,25 +1,42 @@
+import { LanguageSwitcher } from '../components/LanguageSwitcher';
 import { ScreenShell } from '../components/ScreenShell';
+import { useI18n } from '../i18n/LanguageProvider';
 import { useGame } from '../state/GameProvider';
 import styles from './HomeScreen.module.css';
 
 export function HomeScreen() {
-  const { openSetup, openWordSets, openImport, openExport } = useGame();
+  const { openSetup, openSettings, openWordSets, openImport, openExport } = useGame();
+  const { t } = useI18n();
 
   return (
-    <ScreenShell title="Undercover" subtitle="One phone. Secret words. Find who does not match.">
-      <p className={styles.note}>Pass one phone around. Talk in real life. Vote on the phone. No account and no server.</p>
+    <ScreenShell title={t('homeTitle')} subtitle={t('homeSubtitle')}>
+      <p className={styles.note}>{t('homeNote')}</p>
       <button type="button" className={styles.primary} onClick={openSetup}>
-        New Game
+        {t('newGame')}
       </button>
       <button type="button" className={styles.secondary} onClick={openWordSets}>
-        Word Sets
+        {t('wordSets')}
       </button>
       <button type="button" className={styles.secondary} onClick={openImport}>
-        Import JSON
+        {t('importJson')}
       </button>
       <button type="button" className={styles.secondary} onClick={openExport}>
-        Export JSON
+        {t('exportJson')}
       </button>
+      <button type="button" className={styles.secondary} onClick={openSettings}>
+        {t('settings')}
+      </button>
+      <LanguageSwitcher />
+    </ScreenShell>
+  );
+}
+
+export function SettingsScreen() {
+  const { goHome } = useGame();
+  const { t } = useI18n();
+  return (
+    <ScreenShell title={t('settings')} subtitle={t('settingsHint')} onBack={goHome}>
+      <LanguageSwitcher />
     </ScreenShell>
   );
 }

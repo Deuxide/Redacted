@@ -1,4 +1,5 @@
 import { ScreenShell } from '../components/ScreenShell';
+import { useI18n } from '../i18n/LanguageProvider';
 import { useGame } from '../state/GameProvider';
 import type { WordSet } from '../types/game';
 import { MIN_WORDS_PER_GROUP, uniqueWords } from '../types/game';
@@ -7,11 +8,12 @@ import styles from './WordSetScreen.module.css';
 
 export function WordSetEditorScreen() {
   const { editingSet, openWordSets, updateWordSet } = useGame();
+  const { t } = useI18n();
 
   if (!editingSet) {
     return (
-      <ScreenShell title="Editor" subtitle="That set is not editable." onBack={openWordSets}>
-        <p className={styles.note}>Built-in sets stay fixed. Duplicate one to make your own.</p>
+      <ScreenShell title={t('editTitle')} subtitle={t('editorMissing')} onBack={openWordSets}>
+        <p className={styles.note}>{t('editorMissingNote')}</p>
       </ScreenShell>
     );
   }
@@ -21,35 +23,29 @@ export function WordSetEditorScreen() {
   }
 
   return (
-    <ScreenShell title="Edit set" subtitle="Each group needs at least 2 different words." onBack={openWordSets}>
+    <ScreenShell title={t('editTitle')} subtitle={t('editSubtitle')} onBack={openWordSets}>
       <label className={styles.field}>
-        Name
+        {t('setName')}
         <input value={editingSet.name} maxLength={40} onChange={(event) => change({ ...editingSet, name: event.target.value })} />
       </label>
       <label className={styles.field}>
-        Description
-        <input
-          value={editingSet.description}
-          maxLength={120}
-          onChange={(event) => change({ ...editingSet, description: event.target.value })}
-        />
+        {t('description')}
+        <input value={editingSet.description} maxLength={120} onChange={(event) => change({ ...editingSet, description: event.target.value })} />
       </label>
       {editingSet.groups.map((group, groupIndex) => {
         const ready = uniqueWords(group.words).length >= MIN_WORDS_PER_GROUP;
         return (
           <article key={group.id} className={styles.card}>
             <label className={styles.field}>
-              Group label
+              {t('groupLabel')}
               <input
                 value={group.label ?? ''}
                 maxLength={40}
-                placeholder={`Group ${groupIndex + 1}`}
+                placeholder={t('groupFallback', { n: groupIndex + 1 })}
                 onChange={(event) =>
                   change({
                     ...editingSet,
-                    groups: editingSet.groups.map((item) =>
-                      item.id === group.id ? { ...item, label: event.target.value } : item,
-                    ),
+                    groups: editingSet.groups.map((item) => (item.id === group.id ? { ...item, label: event.target.value } : item)),
                   })
                 }
               />
@@ -59,7 +55,7 @@ export function WordSetEditorScreen() {
                 <input
                   value={word}
                   maxLength={32}
-                  aria-label={`Word ${wordIndex + 1}`}
+                  aria-label={t('wordLabel', { n: wordIndex + 1 })}
                   onChange={(event) =>
                     change({
                       ...editingSet,
@@ -82,40 +78,32 @@ export function WordSetEditorScreen() {
                     })
                   }
                 >
-                  Remove
+                  {t('remove')}
                 </button>
               </div>
             ))}
-            <p className={ready ? styles.ok : styles.warn}>
-              {ready ? 'Ready for a game.' : 'Needs 2 different words. Empty and repeated words are ignored.'}
-            </p>
+            <p className={ready ? styles.ok : styles.warn}>{ready ? t('readyGroup') : t('shortGroup')}</p>
             <div className={styles.actions}>
               <button
                 type="button"
                 onClick={() =>
                   change({
                     ...editingSet,
-                    groups: editingSet.groups.map((item) =>
-                      item.id === group.id ? { ...item, words: [...item.words, ''] } : item,
-                    ),
+                    groups: editingSet.groups.map((item) => (item.id === group.id ? { ...item, words: [...item.words, ''] } : item)),
                   })
                 }
               >
-                Add word
+                {t('addWord')}
               </button>
-              <button
-                type="button"
-                className={styles.danger}
-                onClick={() => change({ ...editingSet, groups: editingSet.groups.filter((item) => item.id !== group.id) })}
-              >
-                Delete group
+              <button type="button" className={styles.danger} onClick={() => change({ ...editingSet, groups: editingSet.groups.filter((item) => item.id !== group.id) })}>
+                {t('deleteGroup')}
               </button>
             </div>
           </article>
         );
       })}
       <button type="button" className={styles.primary} onClick={() => change({ ...editingSet, groups: [...editingSet.groups, blankGroup()] })}>
-        Add group
+        {t('addGroup')}
       </button>
     </ScreenShell>
   );

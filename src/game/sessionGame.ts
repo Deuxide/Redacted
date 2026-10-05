@@ -43,15 +43,17 @@ function sanitizeGame(value: unknown): ActiveGame | null {
   if (!isRecord(value) || !Array.isArray(value.players) || value.players.length < 3) return null;
   const players = value.players.flatMap((player) => {
     if (!isRecord(player)) return [];
-    const role: Role | null = player.role === 'undercover' || player.role === 'civilian' ? player.role : null;
+    const role: Role | null =
+      player.role === 'undercover' || player.role === 'civilian' || player.role === 'doesntKnow' ? player.role : null;
     if (!role || typeof player.id !== 'string' || typeof player.name !== 'string' || typeof player.word !== 'string') return [];
-    return [{ id: player.id, name: player.name, role, word: player.word, hasSeenWord: player.hasSeenWord === true }];
+    if (role !== 'doesntKnow' && !player.word) return [];
+    return [{ id: player.id, name: player.name, role, word: role === 'doesntKnow' ? '' : player.word, hasSeenWord: player.hasSeenWord === true }];
   });
   if (players.length !== value.players.length) return null;
   const phase = value.phase === 'discussion' || value.phase === 'voting' || value.phase === 'results' ? value.phase : 'reveal';
-  const undercoverCount = players.filter((player) => player.role === 'undercover').length || 1;
+  const specialCount = players.filter((player) => player.role !== 'civilian').length || 1;
   const suspectsPerVote = Math.min(
-    maxSuspects(undercoverCount, players.length),
+    maxSuspects(specialCount, players.length),
     Math.max(1, typeof value.suspectsPerVote === 'number' ? Math.round(value.suspectsPerVote) : 1),
   );
   const tieBehavior: TieBehavior = value.tieBehavior === 'revote' ? 'revote' : 'eliminate-none';
@@ -78,6 +80,7 @@ function sanitizeGame(value: unknown): ActiveGame | null {
     voteIndex,
     suspectsPerVote,
     tieBehavior,
+    showRoleDuringReveal: value.showRoleDuringReveal !== false,
     votes,
     phase: phase === 'results' && votedCount < players.length ? 'voting' : phase,
   };

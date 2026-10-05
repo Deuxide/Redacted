@@ -1,6 +1,6 @@
-export type Role = 'civilian' | 'undercover';
+export type Role = 'civilian' | 'undercover' | 'doesntKnow';
 
-export type AppScreen = 'home' | 'setup' | 'word-sets' | 'editor' | 'import' | 'export' | 'reveal' | 'discussion' | 'voting' | 'results';
+export type AppScreen = 'home' | 'setup' | 'settings' | 'word-sets' | 'editor' | 'import' | 'export' | 'reveal' | 'discussion' | 'voting' | 'results';
 
 export interface WordGroup {
   id: string;
@@ -26,8 +26,10 @@ export type TieBehavior = 'eliminate-none' | 'revote';
 export interface SetupDraft {
   playerCount: number;
   undercoverCount: number;
+  doesntKnowCount: number;
   suspectsPerVote: number;
   tieBehavior: TieBehavior;
+  showRoleDuringReveal: boolean;
   wordSetId: string;
   players: PlayerDraft[];
 }
@@ -54,6 +56,7 @@ export interface ActiveGame {
   voteIndex: number;
   suspectsPerVote: number;
   tieBehavior: TieBehavior;
+  showRoleDuringReveal: boolean;
   votes: Record<string, string[]>;
   phase: GamePhase;
 }
@@ -61,10 +64,26 @@ export interface ActiveGame {
 export const MIN_PLAYERS = 3;
 export const MAX_PLAYERS = 30;
 export const MIN_UNDERCOVER = 1;
+export const MIN_DOESNT_KNOW = 0;
+export const MIN_CIVILIANS = 1;
 export const MIN_WORDS_PER_GROUP = 2;
 
-export function maxUndercover(playerCount: number): number {
-  return Math.max(MIN_UNDERCOVER, playerCount - 2);
+export function maxUndercover(playerCount: number, doesntKnowCount = 0): number {
+  return Math.max(MIN_UNDERCOVER, playerCount - Math.max(0, doesntKnowCount) - MIN_CIVILIANS);
+}
+
+export function maxDoesntKnow(playerCount: number, undercoverCount: number): number {
+  return Math.max(MIN_DOESNT_KNOW, playerCount - undercoverCount - MIN_CIVILIANS);
+}
+
+export function civilianCount(playerCount: number, undercoverCount: number, doesntKnowCount: number): number {
+  return playerCount - undercoverCount - doesntKnowCount;
+}
+
+export function roleLabel(role: Role): string {
+  if (role === 'undercover') return 'Undercover';
+  if (role === 'doesntKnow') return "Doesn't Know";
+  return 'Civilian';
 }
 
 export function maxSuspects(undercoverCount: number, playerCount: number): number {
