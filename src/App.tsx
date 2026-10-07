@@ -7,7 +7,7 @@ import { ExportScreen } from './screens/ExportScreen';
 import { GuessScreen } from './screens/GuessScreen';
 import { HomeScreen, SettingsScreen } from './screens/HomeScreen';
 import { QuestionAnswerScreen, QuestionDiscussionScreen, QuestionResultsScreen, QuestionSetupScreen, QuestionVoteScreen } from './screens/QuestionScreens';
-import { QuestionSetEditorScreen, QuestionSetsScreen } from './screens/QuestionSetScreens';
+import { QuestionImportScreen, QuestionSetEditorScreen, QuestionSetsScreen } from './screens/QuestionSetScreens';
 import { ImportScreen } from './screens/ImportScreen';
 import { ResultsScreen } from './screens/ResultsScreen';
 import { RevealScreen } from './screens/RevealScreen';
@@ -45,6 +45,8 @@ function AppRouter() {
       return <GuessScreen />;
     case 'results':
       return <ResultsScreen />;
+    case 'question-import':
+      return <QuestionImportScreen />;
     case 'question-sets':
       return <QuestionSetsScreen />;
     case 'question-editor':

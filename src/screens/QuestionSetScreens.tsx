@@ -6,25 +6,15 @@ import { useGame } from '../state/GameProvider';
 import styles from './WordSetScreen.module.css';
 
 export function QuestionSetsScreen() {
-  const { questionSets, questionSetId, goHome, setQuestionSetId, createQuestionSet, deleteQuestionSet, duplicateQuestionSet, openQuestionEditor, importQuestionSet } = useGame();
+  const { questionSets, questionSetId, goHome, setQuestionSetId, createQuestionSet, deleteQuestionSet, duplicateQuestionSet, openQuestionEditor, openQuestionImport } = useGame();
   const { t } = useI18n();
-  const [error, setError] = useState('');
-  const [paste, setPaste] = useState('');
-  const [ready, setReady] = useState(false);
   const sets = [BUILTIN_QUESTION_SET, ...questionSets];
   return (
     <ScreenShell title={t('questionSets')} subtitle={t('questionSetsSubtitle')} onBack={goHome}>
       <div className={styles.row}>
         <button type="button" className={styles.primary} onClick={createQuestionSet}>{t('newSet')}</button>
-        <label className={styles.file}>{t('import')}<input type="file" accept="application/json" onChange={async (event) => { const file = event.target.files?.[0]; if (!file) return; setError((await importQuestionSet(await file.text())) ? t('invalidJson') : ''); }} /></label>
+        <button type="button" className={styles.secondary} onClick={openQuestionImport}>{t('import')}</button>
       </div>
-      {error ? <p className={styles.warn}>{error}</p> : null}
-      <label className={styles.field}>
-        {t('pasteJson')}
-        <textarea value={paste} rows={8} onChange={(event) => { setPaste(event.target.value); setReady(false); }} />
-      </label>
-      <button type="button" className={styles.secondary} disabled={!paste.trim()} onClick={() => { const parsed = parseQuestionSet(paste); setError(parsed.ok ? '' : t('invalidJson')); setReady(parsed.ok); }}>{t('checkPaste')}</button>
-      {ready ? <button type="button" className={styles.primary} onClick={() => { const message = importQuestionSet(paste); setError(message ? t('invalidJson') : ''); if (!message) { setPaste(''); setReady(false); } }}>{t('addSets', { count: 1 })}</button> : null}
       {sets.map((set) => (
         <article key={set.id} className={styles.card}>
           <h2>{set.name}</h2>
@@ -38,6 +28,29 @@ export function QuestionSetsScreen() {
           </div>
         </article>
       ))}
+    </ScreenShell>
+  );
+}
+
+export function QuestionImportScreen() {
+  const { importQuestionSet, openQuestionSets } = useGame();
+  const { t } = useI18n();
+  const [error, setError] = useState('');
+  const [paste, setPaste] = useState('');
+  const [ready, setReady] = useState(false);
+  return (
+    <ScreenShell title={t('importTitle')} subtitle={t('importSubtitle')} onBack={openQuestionSets}>
+      <label className={styles.file}>
+        {t('chooseFile')}
+        <input type="file" accept="application/json,.json" onChange={async (event) => { const file = event.target.files?.[0]; event.target.value = ''; if (!file) return; const raw = await file.text(); const parsed = parseQuestionSet(raw); setPaste(raw); setError(parsed.ok ? '' : t('invalidJson')); setReady(parsed.ok); }} />
+      </label>
+      <label className={styles.field}>
+        {t('pasteJson')}
+        <textarea value={paste} rows={8} onChange={(event) => { setPaste(event.target.value); setReady(false); }} />
+      </label>
+      <button type="button" className={styles.secondary} disabled={!paste.trim()} onClick={() => { const parsed = parseQuestionSet(paste); setError(parsed.ok ? '' : t('invalidJson')); setReady(parsed.ok); }}>{t('checkPaste')}</button>
+      {error ? <p className={styles.warn}>{error}</p> : null}
+      {ready ? <button type="button" className={styles.primary} onClick={() => { const message = importQuestionSet(paste); if (message) setError(t('invalidJson')); else openQuestionSets(); }}>{t('addSets', { count: 1 })}</button> : null}
     </ScreenShell>
   );
 }

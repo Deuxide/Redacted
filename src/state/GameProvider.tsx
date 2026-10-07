@@ -54,6 +54,7 @@ interface GameContextValue {
   questionSets: QuestionSet[];
   importQuestionSet: (raw: string) => Promise<string | null> | string | null;
   openQuestionSets: () => void;
+  openQuestionImport: () => void;
   setQuestionSetId: (id: string) => void;
   questionSetId: string;
   createQuestionSet: () => void;
@@ -204,6 +205,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       openSettings: () => setScreen('settings'),
       openWordSets: () => setScreen('word-sets'),
       openQuestionSets: () => setScreen('question-sets'),
+      openQuestionImport: () => setScreen('question-import'),
       openImport: () => setScreen('import'),
       openExport: () => setScreen('export'),
       openEditor: (setId) => {
