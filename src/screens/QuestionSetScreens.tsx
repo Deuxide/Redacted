@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { ScreenShell } from '../components/ScreenShell';
 import { useI18n } from '../i18n/LanguageProvider';
-import { BUILTIN_QUESTION_SET } from '../question/sets';
+import { BUILTIN_QUESTION_SET, parseQuestionSet } from '../question/sets';
 import { useGame } from '../state/GameProvider';
 import styles from './WordSetScreen.module.css';
 
@@ -9,6 +9,8 @@ export function QuestionSetsScreen() {
   const { questionSets, questionSetId, goHome, setQuestionSetId, createQuestionSet, deleteQuestionSet, duplicateQuestionSet, openQuestionEditor, importQuestionSet } = useGame();
   const { t } = useI18n();
   const [error, setError] = useState('');
+  const [paste, setPaste] = useState('');
+  const [ready, setReady] = useState(false);
   const sets = [BUILTIN_QUESTION_SET, ...questionSets];
   return (
     <ScreenShell title={t('questionSets')} subtitle={t('questionSetsSubtitle')} onBack={goHome}>
@@ -17,6 +19,12 @@ export function QuestionSetsScreen() {
         <label className={styles.file}>{t('import')}<input type="file" accept="application/json" onChange={async (event) => { const file = event.target.files?.[0]; if (!file) return; setError((await importQuestionSet(await file.text())) ? t('invalidJson') : ''); }} /></label>
       </div>
       {error ? <p className={styles.warn}>{error}</p> : null}
+      <label className={styles.field}>
+        {t('pasteJson')}
+        <textarea value={paste} rows={8} onChange={(event) => { setPaste(event.target.value); setReady(false); }} />
+      </label>
+      <button type="button" className={styles.secondary} disabled={!paste.trim()} onClick={() => { const parsed = parseQuestionSet(paste); setError(parsed.ok ? '' : t('invalidJson')); setReady(parsed.ok); }}>{t('checkPaste')}</button>
+      {ready ? <button type="button" className={styles.primary} onClick={() => { const message = importQuestionSet(paste); setError(message ? t('invalidJson') : ''); if (!message) { setPaste(''); setReady(false); } }}>{t('addSets', { count: 1 })}</button> : null}
       {sets.map((set) => (
         <article key={set.id} className={styles.card}>
           <h2>{set.name}</h2>
