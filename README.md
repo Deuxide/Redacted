@@ -1,8 +1,8 @@
 # Undercover
 
-A mobile-first, pass-and-play party game. One phone is shared by everyone. Players talk in real life. The site only assigns secret words, reveals them privately, and runs the vote.
+A mobile-first, pass-and-play party game. One phone is shared by everyone. Players talk in real life. The site assigns a secret word or question, reveals it privately, and runs the vote.
 
-There is no account, chat, or server. The game stays on the device.
+There are two modes. Word Undercover uses related words. Question Undercover uses related questions. There is no account, chat, or server. The game stays on the device.
 
 ## Play
 
@@ -134,6 +134,61 @@ Rules:
 - Use title case.
 - Audience: a family party. No violence, romance, or adult topics.
 - Theme: everyday objects, food, animals, places, and school items.
+```
+
+## Question sets
+
+Question Undercover picks one pair from the selected set. Most players get the civilian question. Exactly one player gets the undercover question. The two questions must be related, but not the same.
+
+Import and export are on the Question Sets page. Paste JSON is on the import page, next to the file picker. Nothing is uploaded. Custom sets stay in their own device storage, separate from word sets.
+
+```json
+{
+  "name": "General Questions",
+  "groups": [
+    {
+      "id": "q-001",
+      "civilianQuestion": "What is the best way to spend a free afternoon?",
+      "undercoverQuestion": "What is the best way to spend a free evening?"
+    }
+  ]
+}
+```
+
+A group is valid only if it has a unique id, both questions are filled in, and the two questions are different. The set name cannot be empty. At least one valid group is required.
+
+## Example prompt for an AI question set
+
+Copy this into another assistant, then paste the JSON on the Question Sets import page.
+
+```text
+Create a JSON question set for the party game Question Undercover.
+
+Rules:
+- Return only valid JSON. No markdown and no explanation.
+- Use this shape exactly:
+  {
+    "name": "Set name",
+    "groups": [
+      {
+        "id": "q-001",
+        "civilianQuestion": "What is the best way to spend a free afternoon?",
+        "undercoverQuestion": "What is the best way to spend a free evening?"
+      }
+    ]
+  }
+- Make 20 groups.
+- Every group needs a unique id, such as q-001, q-002, and so on.
+- Every group needs exactly two fields: civilianQuestion and undercoverQuestion.
+- Both questions must be filled in.
+- The two questions in a group must be different, even if capitalization is ignored.
+- The questions must be related, so a short spoken answer could fit either one.
+- Do not reuse a question in another group.
+- Keep the set name under 40 characters.
+- Keep each question under 140 characters.
+- Write full questions, not single words.
+- Audience: a family party. No violence, romance, or adult topics.
+- Theme: free time, food, school, trips, weather, and everyday choices.
 ```
 
 ## Languages and theme
