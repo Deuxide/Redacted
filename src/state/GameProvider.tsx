@@ -58,6 +58,7 @@ interface GameContextValue {
   questionSetId: string;
   createQuestionSet: () => void;
   deleteQuestionSet: (id: string) => void;
+  duplicateQuestionSet: (id: string) => void;
   updateQuestionSet: (set: QuestionSet) => void;
   openQuestionEditor: (id: string) => void;
   editingQuestionSet: QuestionSet | null;
@@ -305,6 +306,14 @@ export function GameProvider({ children }: { children: ReactNode }) {
       deleteQuestionSet: (id) => {
         setQuestionSets((current) => { const next = current.filter((set) => set.id !== id); saveQuestionSets(next); return next; });
         if (questionSetId === id) setQuestionSetIdState(BUILTIN_QUESTION_SET.id);
+      },
+      duplicateQuestionSet: (id) => {
+        const source = [BUILTIN_QUESTION_SET, ...questionSets].find((set) => set.id === id);
+        if (!source) return;
+        const copy = { ...source, id: crypto.randomUUID(), name: `${source.name} copy`, builtin: false, groups: source.groups.map((group) => ({ ...group, id: crypto.randomUUID() })) };
+        setQuestionSets((current) => { const next = [copy, ...current]; saveQuestionSets(next); return next; });
+        setEditingQuestionId(copy.id);
+        setScreen('question-editor');
       },
       updateQuestionSet: (set) => setQuestionSets((current) => { const next = current.map((item) => item.id === set.id ? set : item); saveQuestionSets(next); return next; }),
       openQuestionEditor: (id) => { setEditingQuestionId(id); setScreen('question-editor'); },

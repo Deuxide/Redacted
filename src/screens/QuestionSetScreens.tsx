@@ -6,7 +6,7 @@ import { useGame } from '../state/GameProvider';
 import styles from './WordSetScreen.module.css';
 
 export function QuestionSetsScreen() {
-  const { questionSets, questionSetId, goHome, setQuestionSetId, createQuestionSet, deleteQuestionSet, openQuestionEditor, importQuestionSet } = useGame();
+  const { questionSets, questionSetId, goHome, setQuestionSetId, createQuestionSet, deleteQuestionSet, duplicateQuestionSet, openQuestionEditor, importQuestionSet } = useGame();
   const { t } = useI18n();
   const [error, setError] = useState('');
   const sets = [BUILTIN_QUESTION_SET, ...questionSets];
@@ -14,7 +14,7 @@ export function QuestionSetsScreen() {
     <ScreenShell title={t('questionSets')} subtitle={t('questionSetsSubtitle')} onBack={goHome}>
       <div className={styles.row}>
         <button type="button" className={styles.primary} onClick={createQuestionSet}>{t('newSet')}</button>
-        <label className={styles.secondary}>{t('import')}<input type="file" accept="application/json" onChange={async (event) => { const file = event.target.files?.[0]; if (!file) return; setError((await importQuestionSet(await file.text())) ? t('invalidJson') : ''); }} /></label>
+        <label className={styles.file}>{t('import')}<input type="file" accept="application/json" onChange={async (event) => { const file = event.target.files?.[0]; if (!file) return; setError((await importQuestionSet(await file.text())) ? t('invalidJson') : ''); }} /></label>
       </div>
       {error ? <p className={styles.warn}>{error}</p> : null}
       {sets.map((set) => (
@@ -23,8 +23,9 @@ export function QuestionSetsScreen() {
           <small>{t('totalGroups', { ready: set.groups.length, total: set.groups.length })}{set.builtin ? ` · ${t('builtin')}` : ''}{set.id === questionSetId ? ` · ${t('usedForGames')}` : ''}</small>
           <div className={styles.actions}>
             <button type="button" onClick={() => setQuestionSetId(set.id)}>{t('use')}</button>
-            {set.builtin ? null : <button type="button" onClick={() => openQuestionEditor(set.id)}>{t('edit')}</button>}
-            {set.builtin ? null : <button type="button" className={styles.danger} onClick={() => deleteQuestionSet(set.id)}>{t('delete')}</button>}
+            {set.builtin ? <button type="button" onClick={() => duplicateQuestionSet(set.id)}>{t('duplicate')}</button> : <button type="button" onClick={() => openQuestionEditor(set.id)}>{t('edit')}</button>}
+            {set.builtin ? null : <button type="button" onClick={() => duplicateQuestionSet(set.id)}>{t('duplicate')}</button>}
+            {set.builtin ? null : <button type="button" className={styles.danger} onClick={() => { if (window.confirm(t('delete'))) deleteQuestionSet(set.id); }}>{t('delete')}</button>}
             <button type="button" onClick={() => download(set)}>{t('export')}</button>
           </div>
         </article>
@@ -39,12 +40,12 @@ export function QuestionSetEditorScreen() {
   if (!editingQuestionSet) return null;
   return (
     <ScreenShell title={t('questionSets')} onBack={goHome}>
-      <label>{t('setName')}<input value={editingQuestionSet.name} onChange={(event) => updateQuestionSet({ ...editingQuestionSet, name: event.target.value })} /></label>
-      {editingQuestionSet.groups.map((group, index) => (
+      <label className={styles.field}>{t('setName')}<input value={editingQuestionSet.name} maxLength={40} onChange={(event) => updateQuestionSet({ ...editingQuestionSet, name: event.target.value })} /></label>
+      {editingQuestionSet.groups.map((group) => (
         <article key={group.id} className={styles.card}>
-          <label>{t('civilianQuestionField')}<textarea value={group.civilianQuestion} onChange={(event) => updateQuestionSet({ ...editingQuestionSet, groups: editingQuestionSet.groups.map((item, itemIndex) => itemIndex === index ? { ...item, civilianQuestion: event.target.value } : item) })} /></label>
-          <label>{t('undercoverQuestionField')}<textarea value={group.undercoverQuestion} onChange={(event) => updateQuestionSet({ ...editingQuestionSet, groups: editingQuestionSet.groups.map((item, itemIndex) => itemIndex === index ? { ...item, undercoverQuestion: event.target.value } : item) })} /></label>
-          <button type="button" className={styles.danger} onClick={() => updateQuestionSet({ ...editingQuestionSet, groups: editingQuestionSet.groups.filter((item) => item.id !== group.id) })}>{t('delete')}</button>
+          <label className={styles.field}>{t('civilianQuestionField')}<textarea value={group.civilianQuestion} onChange={(event) => updateQuestionSet({ ...editingQuestionSet, groups: editingQuestionSet.groups.map((item) => item.id === group.id ? { ...item, civilianQuestion: event.target.value } : item) })} /></label>
+          <label className={styles.field}>{t('undercoverQuestionField')}<textarea value={group.undercoverQuestion} onChange={(event) => updateQuestionSet({ ...editingQuestionSet, groups: editingQuestionSet.groups.map((item) => item.id === group.id ? { ...item, undercoverQuestion: event.target.value } : item) })} /></label>
+          <button type="button" className={styles.danger} onClick={() => updateQuestionSet({ ...editingQuestionSet, groups: editingQuestionSet.groups.filter((item) => item.id !== group.id) })}>{t('deleteGroup')}</button>
         </article>
       ))}
       <button type="button" className={styles.primary} onClick={() => updateQuestionSet({ ...editingQuestionSet, groups: [...editingQuestionSet.groups, { id: crypto.randomUUID(), civilianQuestion: '', undercoverQuestion: '' }] })}>{t('addGroup')}</button>

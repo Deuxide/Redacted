@@ -7,7 +7,7 @@ import { useI18n } from '../i18n/LanguageProvider';
 import { BUILTIN_QUESTION_SET } from '../question/sets';
 import { useGame } from '../state/GameProvider';
 import { MIN_PLAYERS } from '../types/game';
-import styles from './RevealScreen.module.css';
+import styles from './WordSetScreen.module.css';
 import setup from './SetupScreen.module.css';
 
 export function QuestionSetupScreen() {
@@ -16,7 +16,7 @@ export function QuestionSetupScreen() {
   return (
     <ScreenShell title={t('questionMode')} subtitle={t('questionModeHint')} onBack={goHome} footer={<button type="button" className={setup.start} onClick={startQuestionGame} disabled={draft.playerCount < MIN_PLAYERS}>{t('startQuestions')}</button>}>
       <p>{t('lobbyHint')}</p>
-      <label>
+      <label className={styles.field}>
         {t('questionSet')}
         <select value={questionSetId} onChange={(event) => setQuestionSetId(event.target.value)}>
           {[BUILTIN_QUESTION_SET, ...questionSets].map((set) => <option key={set.id} value={set.id}>{set.name}</option>)}
@@ -26,7 +26,7 @@ export function QuestionSetupScreen() {
         {draft.players.map((player, index) => (
           <li key={player.id}>
             <label htmlFor={`q-${player.id}`}>{t('playerLabel', { n: index + 1 })}</label>
-            <div className={styles.nameRow}>
+            <div className={styles.wordRow}>
               <input id={`q-${player.id}`} value={player.name} maxLength={24} aria-label={t('playerLabel', { n: index + 1 })} onChange={(event) => setPlayerName(player.id, event.target.value)} />
               <button type="button" onClick={() => removePlayer(player.id)} disabled={draft.playerCount <= MIN_PLAYERS}>{t('remove')}</button>
             </div>
@@ -55,11 +55,13 @@ export function QuestionAnswerScreen() {
       {step === 'pass' ? <button type="button" className={setup.start} onClick={() => setStep('answer')}>{t('revealQuestion')}</button> : null}
       {step === 'answer' ? (
         <>
-          <p>{t('yourQuestion')}</p>
-          <strong>{player.question}</strong>
-          <label>
+          <article className={styles.card}>
+            <p className={styles.note}>{t('yourQuestion')}</p>
+            <strong>{player.question}</strong>
+          </article>
+          <label className={styles.field}>
             {t('yourAnswer')}
-            <input value={text} maxLength={160} aria-label={t('yourAnswer')} onChange={(event) => setText(event.target.value)} />
+            <textarea value={text} maxLength={160} placeholder={t('yourAnswer')} aria-label={t('yourAnswer')} onChange={(event) => setText(event.target.value)} />
           </label>
           <button type="button" className={setup.start} disabled={!text.trim()} onClick={() => setStep('done')}>{t('submitAnswer')}</button>
         </>
@@ -83,7 +85,7 @@ export function QuestionDiscussionScreen() {
     <ScreenShell title={t('answersTitle')} onBack={leaveGame}>
       {questionRound.playerOrder.map((id) => {
         const player = questionRound.players.find((entry) => entry.id === id);
-        return <article key={id}><strong>{player?.name}</strong><p>{questionRound.answers[id]}</p></article>;
+        return <article key={id} className={styles.card}><h2>{player?.name}</h2><p>{questionRound.answers[id]}</p></article>;
       })}
       {questionRound.civilianQuestionRevealed ? <p>{t('civilianQuestion')}: {questionRound.civilianQuestion}</p> : <button type="button" className={setup.secondary} onClick={revealCivilianQuestion}>{t('revealCivilianQuestion')}</button>}
       {questionRound.civilianQuestionRevealed ? (
