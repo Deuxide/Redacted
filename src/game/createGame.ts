@@ -25,6 +25,7 @@ export function createActiveGame(draft: SetupDraft, wordSet: WordSet): ActiveGam
     votes: {},
     round: 1,
     eliminations: [],
+    voteHistory: [],
     pointsAwarded: false,
     phase: 'reveal',
     players: draft.players.map((player, index) => {
@@ -39,5 +40,6 @@ export function createActiveGame(draft: SetupDraft, wordSet: WordSet): ActiveGam
         individualWins: 0,
       };
     }),
+    playerOrder: shuffle(draft.players.map((player) => player.id)),
   };
 }

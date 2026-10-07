@@ -79,6 +79,10 @@ function sanitizeGame(value: unknown): ActiveGame | null {
     civilianWord: typeof value.civilianWord === 'string' ? value.civilianWord : '',
     undercoverWord: typeof value.undercoverWord === 'string' ? value.undercoverWord : '',
     players,
+    playerOrder: (() => {
+      const saved = Array.isArray(value.playerOrder) ? value.playerOrder.filter((id): id is string => typeof id === 'string' && players.some((player) => player.id === id)) : [];
+      return saved.length === players.length ? saved : players.map((player) => player.id);
+    })(),
     revealIndex: clampIndex(value.revealIndex, players.length),
     voteIndex,
     suspectsPerVote,
@@ -89,6 +93,7 @@ function sanitizeGame(value: unknown): ActiveGame | null {
     eliminations: Array.isArray(value.eliminations)
       ? value.eliminations.flatMap((item) => (isRecord(item) && typeof item.playerId === 'string' ? [{ playerId: item.playerId, round: typeof item.round === 'number' ? item.round : 1 }] : []))
       : [],
+    voteHistory: Array.isArray(value.voteHistory) ? value.voteHistory.flatMap((item) => (isRecord(item) && isRecord(item.counts) ? [{ round: typeof item.round === 'number' ? item.round : 1, votes: {}, counts: item.counts as Record<string, number>, wasTie: item.wasTie === true, skipped: item.skipped === true, eliminatedPlayerId: typeof item.eliminatedPlayerId === 'string' ? item.eliminatedPlayerId : undefined }] : [])) : [],
     pointsAwarded: value.pointsAwarded === true,
     phase: phase === 'results' && votedCount < players.filter((player) => !player.eliminated).length && players.some((player) => !player.eliminated) ? 'voting' : phase,
   };

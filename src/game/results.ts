@@ -40,17 +40,23 @@ export function activePlayers(players: AssignedPlayer[]): AssignedPlayer[] {
   return players.filter((player) => !player.eliminated);
 }
 
-export function firstActiveIndex(players: AssignedPlayer[]): number {
-  const index = players.findIndex((player) => !player.eliminated);
+export function firstActiveIndex(order: string[], players: AssignedPlayer[]): number {
+  const eliminated = new Set(players.filter((player) => player.eliminated).map((player) => player.id));
+  const index = order.findIndex((id) => !eliminated.has(id));
   return index < 0 ? 0 : index;
 }
 
-export function nextActiveIndex(players: AssignedPlayer[], from: number): number {
-  for (let offset = 1; offset <= players.length; offset += 1) {
-    const index = (from + offset) % players.length;
-    if (!players[index]?.eliminated) return index;
+export function nextActiveIndex(order: string[], players: AssignedPlayer[], from: number): number {
+  const eliminated = new Set(players.filter((player) => player.eliminated).map((player) => player.id));
+  for (let offset = 1; offset <= order.length; offset += 1) {
+    const index = (from + offset) % order.length;
+    if (order[index] && !eliminated.has(order[index])) return index;
   }
   return from;
+}
+
+export function playerInOrder(players: AssignedPlayer[], order: string[], index: number): AssignedPlayer | undefined {
+  return players.find((player) => player.id === order[index]);
 }
 
 export function minActiveToContinue(active: AssignedPlayer[]): number {
@@ -98,17 +104,23 @@ export function evaluateWinCondition(players: AssignedPlayer[]): {
   };
 }
 
-export function tallyVotes(game: ActiveGame): VoteTally {
+export function countVotes(game: ActiveGame): Record<string, number> {
   const activeIds = new Set(activePlayers(game.players).map((player) => player.id));
   const counts: Record<string, number> = { [SKIP_VOTE_ID]: 0 };
   for (const player of game.players) counts[player.id] = 0;
-  for (const [voterId, suspects] of Object.entries(game.votes)) {
-    if (!activeIds.has(voterId)) continue;
-    for (const suspectId of suspects) {
-      if (suspectId === SKIP_VOTE_ID) counts[SKIP_VOTE_ID] += 1;
-      else if (suspectId !== voterId && activeIds.has(suspectId)) counts[suspectId] += 1;
+  for (const [voterId, targets] of Object.entries(game.votes)) {
+    const voter = game.players.find((player) => player.id === voterId);
+    if (!voter || voter.eliminated || !activeIds.has(voterId) || !targets?.length) continue;
+    for (const target of [...new Set(targets)]) {
+      if (target === SKIP_VOTE_ID) counts[SKIP_VOTE_ID] += 1;
+      else if (target !== voterId && activeIds.has(target)) counts[target] += 1;
     }
   }
+  return counts;
+}
+
+export function tallyVotes(game: ActiveGame): VoteTally {
+  const counts = countVotes(game);
   const topCount = Math.max(0, counts[SKIP_VOTE_ID] ?? 0, ...activePlayers(game.players).map((player) => counts[player.id] ?? 0));
   const leaders = [
     ...activePlayers(game.players)
@@ -134,8 +146,22 @@ export function tallyVotes(game: ActiveGame): VoteTally {
 }
 
 export function resolveCompletedVote(game: ActiveGame): ActiveGame {
+  const active = activePlayers(game.players);
+  const submitted = active.filter((player) => game.votes[player.id]?.length).length;
+  if (submitted < active.length) return game;
   const tally = tallyVotes(game);
-  if (tally.tied || tally.leaders.length !== 1 || tally.leaders[0]?.id === SKIP_VOTE_ID) return { ...game, phase: 'elimination' };
+  const skipped = !tally.tied && tally.leaders.length === 1 && tally.leaders[0]?.id === SKIP_VOTE_ID;
+  const history = {
+    round: game.round,
+    votes: game.votes,
+    counts: tally.counts,
+    eliminatedPlayerId: !tally.tied && !skipped ? tally.leaders[0]?.id : undefined,
+    wasTie: tally.tied,
+    skipped,
+  };
+  if (tally.tied || tally.leaders.length !== 1 || skipped) {
+    return { ...game, voteHistory: [...(game.voteHistory ?? []), history], phase: 'elimination' };
+  }
   const eliminatedId = tally.leaders[0]?.id;
   const players = game.players.map((player) => (player.id === eliminatedId ? { ...player, eliminated: true } : player));
   const eliminated = players.find((player) => player.id === eliminatedId);
@@ -144,6 +170,7 @@ export function resolveCompletedVote(game: ActiveGame): ActiveGame {
     ...game,
     players: players.map((player) => player.id === eliminatedId && player.role === 'doesntKnow' ? { ...player, doesntKnowGuess: 'pending' } : player),
     eliminations: eliminatedId ? [...game.eliminations, { playerId: eliminatedId, round: game.round }] : game.eliminations,
+    voteHistory: [...(game.voteHistory ?? []), history],
     phase: needsGuess ? 'guess' : 'elimination',
   };
 }
@@ -154,7 +181,7 @@ export function wordsMatch(guess: string, target: string): boolean {
 
 export function afterElimination(game: ActiveGame): ActiveGame {
   if (!canVoteAgain(game.players)) return { ...game, phase: 'results' };
-  return { ...game, phase: 'voting', votes: {}, voteIndex: firstActiveIndex(game.players), round: game.round + 1 };
+  return { ...game, phase: 'voting', votes: {}, voteIndex: firstActiveIndex(game.playerOrder, game.players), round: game.round + 1 };
 }
 
 function statusFor(ids: string[], eliminatedIds: string[]): SideStatus {

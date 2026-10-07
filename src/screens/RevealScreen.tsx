@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { RoleBadge } from '../components/RoleBadge';
 import { ScreenShell } from '../components/ScreenShell';
 import { useI18n } from '../i18n/LanguageProvider';
+import { playerInOrder } from '../game/results';
 import { useGame } from '../state/GameProvider';
 import type { ActiveGame, Role } from '../types/game';
 import styles from './RevealScreen.module.css';
@@ -28,7 +29,8 @@ export function RevealScreen() {
 function PlayerTurn({ game, onLeave, onPass }: { game: ActiveGame; onLeave: () => void; onPass: () => void }) {
   const { t } = useI18n();
   const [step, setStep] = useState<'pass' | 'privacy' | 'secret' | 'clearing'>('pass');
-  const player = game.players[game.revealIndex];
+  const player = playerInOrder(game.players, game.playerOrder, game.revealIndex);
+  if (!player) return null;
   const stepNumber = game.revealIndex + 1;
 
   useEffect(() => {

@@ -52,6 +52,15 @@ export interface EliminationRecord {
   round: number;
 }
 
+export interface VoteRound {
+  round: number;
+  votes: Record<string, string[]>;
+  counts: Record<string, number>;
+  eliminatedPlayerId?: string;
+  wasTie: boolean;
+  skipped: boolean;
+}
+
 export type GamePhase = 'reveal' | 'discussion' | 'voting' | 'elimination' | 'guess' | 'results';
 
 export interface ActiveGame {
@@ -62,6 +71,7 @@ export interface ActiveGame {
   civilianWord: string;
   undercoverWord: string;
   players: AssignedPlayer[];
+  playerOrder: string[];
   revealIndex: number;
   voteIndex: number;
   suspectsPerVote: number;
@@ -70,6 +80,7 @@ export interface ActiveGame {
   votes: Record<string, string[]>;
   round: number;
   eliminations: EliminationRecord[];
+  voteHistory: VoteRound[];
   pointsAwarded: boolean;
   phase: GamePhase;
 }

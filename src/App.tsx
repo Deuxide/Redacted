@@ -1,4 +1,5 @@
 import { FullscreenButton } from './components/FullscreenButton';
+import { LanguageProvider } from './i18n/LanguageProvider';
 import { ThemeProvider } from './theme/ThemeProvider';
 import { DiscussionScreen } from './screens/DiscussionScreen';
 import { EliminationScreen } from './screens/EliminationScreen';

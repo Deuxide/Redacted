@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { ScreenShell } from '../components/ScreenShell';
 import { useI18n } from '../i18n/LanguageProvider';
-import { SKIP_VOTE_ID, activePlayers } from '../game/results';
+import { SKIP_VOTE_ID, activePlayers, playerInOrder } from '../game/results';
 import { useGame } from '../state/GameProvider';
 import type { ActiveGame } from '../types/game';
 import styles from './VotingScreen.module.css';
@@ -35,7 +35,8 @@ function VoteTurn({
   const { t } = useI18n();
   const [step, setStep] = useState<'pass' | 'choose' | 'confirm' | 'clearing'>('pass');
   const [selected, setSelected] = useState<string[]>([]);
-  const voter = game.players[game.voteIndex];
+  const voter = playerInOrder(game.players, game.playerOrder, game.voteIndex);
+  if (!voter) return null;
   const active = activePlayers(game.players);
   const needed = Math.min(game.suspectsPerVote, Math.max(1, active.length - 1));
   const locked = Boolean(game.votes[voter.id]);

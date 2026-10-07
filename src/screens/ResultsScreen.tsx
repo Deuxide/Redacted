@@ -1,4 +1,5 @@
 import { RoleBadge } from '../components/RoleBadge';
+import { Scoreboard } from '../components/Scoreboard';
 import { ScreenShell } from '../components/ScreenShell';
 import { tallyVotes } from '../game/results';
 import { useI18n } from '../i18n/LanguageProvider';
@@ -6,7 +7,7 @@ import { useGame } from '../state/GameProvider';
 import styles from './ResultsScreen.module.css';
 
 export function ResultsScreen() {
-  const { game, session, roundPoints, playAgain, continueSession, newGame, revote, leaveGame } = useGame();
+  const { game, session, roundPoints, playAgain, continueSession, newGame, leaveGame } = useGame();
   const { t } = useI18n();
 
   if (!game || game.phase !== 'results') {
@@ -20,7 +21,6 @@ export function ResultsScreen() {
   const tally = tallyVotes(game);
   const title = tally.outcome === 'draw' ? t('drawResult') : tally.outcome === 'civilianWin' ? t('civiliansWin') : tally.outcome === 'doesntKnowWin' ? t('doesntKnowWin') : t('undercoverWin');
   const why = tally.outcome === 'draw' ? t('drawReason') : tally.outcome === 'civilianWin' ? t('whyCivilians') : tally.outcome === 'doesntKnowWin' ? t('whyDoesntKnow') : t('whyUndercover');
-  const ranking = [...game.players].sort((a, b) => (tally.counts[b.id] ?? 0) - (tally.counts[a.id] ?? 0) || a.name.localeCompare(b.name));
   const hasUndercover = game.players.some((player) => player.role === 'undercover');
   const hasBlank = game.players.some((player) => player.role === 'doesntKnow');
 
@@ -99,30 +99,21 @@ export function ResultsScreen() {
       </section>
 
       <section>
-        <h2 className={styles.section}>{t('mostVotes')}</h2>
-        {tally.tied ? <p className={styles.tie}>{t('tieLabel')}</p> : null}
-        <ol className={styles.rank}>
-          {ranking.map((player) => (
-            <li key={player.id}>{t('voteRank', { name: player.name, count: tally.counts[player.id] ?? 0 })}</li>
-          ))}
-        </ol>
-      </section>
-
-      {tally.tied ? (
-        <button type="button" className={styles.secondary} onClick={revote}>
-          {t('tieRevote')}
-        </button>
-      ) : null}
-      <section>
         <h2 className={styles.section}>{t('roundPoints')}</h2>
         {game.players.map((player) => (
-          <p key={player.id}>{player.name} {t('plusPoints', { count: roundPoints[player.id] ?? 0 })}</p>
+          <p key={player.id}>{player.name} <strong>{t('plusPoints', { count: roundPoints[player.id] ?? 0 })}</strong></p>
         ))}
       </section>
+      {session ? <Scoreboard players={session.players} gains={roundPoints} /> : null}
       <section>
-        <h2 className={styles.section}>{t('sessionScore')}</h2>
-        {[...(session?.players ?? [])].sort((a, b) => b.points - a.points).map((player, index) => (
-          <p key={player.id}>{index + 1}. {player.name} {t('pointsLabel', { count: player.points })}</p>
+        <h2 className={styles.section}>{t('mostVotes')}</h2>
+        {(game.voteHistory ?? []).map((item, index) => (
+          <article key={`${item.round}-${index}`} className={styles.person}>
+            <p>{t('roundLabel', { n: item.round })}</p>
+            {Object.entries(item.counts).filter(([, count]) => count > 0).map(([id, count]) => (
+              <p key={id}>{id === 'skip' ? t('skipVote') : game.players.find((player) => player.id === id)?.name ?? id}: {count}</p>
+            ))}
+          </article>
         ))}
       </section>
       <button type="button" className={styles.primary} onClick={continueSession}>{t('continueGame')}</button>

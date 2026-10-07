@@ -27,14 +27,6 @@ export function EliminationScreen() {
           <h2 className={styles.section}>{t('tieLabel')}</h2>
           <p>{t('tieAgain')}</p>
           <p>{t('tiedPlayers')}: {tally.leaders.map((leader) => leader.id === SKIP_VOTE_ID ? t('skipVote') : leader.name).join(', ')}</p>
-          <ol className={styles.rank}>
-            {activePlayers(game.players)
-              .map((player) => ({ player, votes: tally.counts[player.id] ?? 0 }))
-              .sort((a, b) => b.votes - a.votes || a.player.name.localeCompare(b.player.name))
-              .map(({ player, votes }) => (
-                <li key={player.id}>{t('voteRank', { name: player.name, count: votes })}</li>
-              ))}
-          </ol>
         </>
       ) : null}
       {skipped ? (
@@ -48,7 +40,7 @@ export function EliminationScreen() {
         <article className={styles.person}>
           <p>{t('votedOut', { name: just.name })}</p>
           <RoleBadge role={just.role} />
-          <p>{just.role === 'doesntKnow' ? t('noWord') : just.word}</p>
+          <p>{t('voteCounted')}</p>
         </article>
       ) : null}
       <p>{t('activeLeft', { count: activePlayers(game.players).length })}</p>

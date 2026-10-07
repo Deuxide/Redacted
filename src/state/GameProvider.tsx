@@ -4,7 +4,7 @@ import { playableGroups } from '../types/game';
 import { BUILTIN_WORD_SET } from '../data/builtinWordSets';
 import { createActiveGame } from '../game/createGame';
 import { applyRoundPoints, emptySession, loadPointSession, roundPointsFor, savePointSession, type PointSession } from '../game/sessionPoints';
-import { SKIP_VOTE_ID, activePlayers, afterElimination, firstActiveIndex, nextActiveIndex, resolveCompletedVote, wordsMatch } from '../game/results';
+import { SKIP_VOTE_ID, activePlayers, afterElimination, firstActiveIndex, nextActiveIndex, playerInOrder, resolveCompletedVote, wordsMatch } from '../game/results';
 import { addPlayer, balanceRoles, clampSuspects, loadDraft, removePlayer, resizePlayers, saveDraft } from '../game/draft';
 import { clearSessionGame, loadSessionGame, saveSessionGame, screenForPhase } from '../game/sessionGame';
 import { useI18n } from '../i18n/LanguageProvider';
@@ -224,24 +224,24 @@ export function GameProvider({ children }: { children: ReactNode }) {
       markCurrentSeenAndAdvance: () => {
         setGame((current) => {
           if (!current || current.phase !== 'reveal') return current;
-          const players = current.players.map((player, index) =>
-            index === current.revealIndex ? { ...player, hasSeenWord: true } : player,
+          const players = current.players.map((player) =>
+            player.id === current.playerOrder[current.revealIndex] ? { ...player, hasSeenWord: true } : player,
           );
           const nextIndex = current.revealIndex + 1;
-          if (nextIndex >= players.length) {
-            return { ...current, players, phase: 'discussion', revealIndex: players.length - 1 };
+          if (nextIndex >= current.playerOrder.length) {
+            return { ...current, players, phase: 'discussion', revealIndex: current.playerOrder.length - 1 };
           }
           return { ...current, players, revealIndex: nextIndex };
         });
       },
       startVoting: () => {
-        setGame((current) => (current ? { ...current, phase: 'voting', voteIndex: firstActiveIndex(current.players), votes: {}, round: current.round || 1 } : current));
+        setGame((current) => (current ? { ...current, phase: 'voting', voteIndex: firstActiveIndex(current.playerOrder, current.players), votes: {}, round: current.round || 1 } : current));
         setScreen('voting');
       },
       castVote: (voterId, suspectIds) => {
         setGame((current) => {
           if (!current || current.phase !== 'voting') return current;
-          const voter = current.players[current.voteIndex];
+          const voter = playerInOrder(current.players, current.playerOrder, current.voteIndex);
           const active = activePlayers(current.players);
           const needed = Math.min(current.suspectsPerVote, Math.max(1, active.length - 1));
           if (!voter || voter.eliminated || voter.id !== voterId || current.votes[voterId]) return current;
@@ -252,7 +252,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
           const votes = { ...current.votes, [voterId]: unique };
           const voted = active.filter((player) => votes[player.id]).length;
           if (voted >= active.length) return resolveCompletedVote({ ...current, votes });
-          return { ...current, votes, voteIndex: nextActiveIndex(current.players, current.voteIndex) };
+          return { ...current, votes, voteIndex: nextActiveIndex(current.playerOrder, current.players, current.voteIndex) };
         });
       },
       continueAfterElimination: () => {
@@ -273,7 +273,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       },
       revote: () => {
         setGame((current) =>
-          current ? { ...current, phase: 'voting', voteIndex: firstActiveIndex(current.players), votes: {} } : current,
+          current ? { ...current, phase: 'voting', voteIndex: firstActiveIndex(current.playerOrder, current.players), votes: {} } : current,
         );
         setScreen('voting');
       },
