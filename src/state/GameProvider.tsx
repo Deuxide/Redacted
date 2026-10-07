@@ -8,7 +8,7 @@ import { SKIP_VOTE_ID, activePlayers, afterElimination, firstActiveIndex, nextAc
 import { addPlayer, balanceRoles, clampSuspects, loadDraft, removePlayer, resizePlayers, saveDraft } from '../game/draft';
 import { clearSessionGame, loadSessionGame, saveSessionGame, screenForPhase } from '../game/sessionGame';
 import { createQuestionRound, type QuestionRound } from '../question/createRound';
-import { loadQuestionSets, parseQuestionSet, saveQuestionSets, type QuestionSet } from '../question/sets';
+import { BUILTIN_QUESTION_SET, loadQuestionSets, parseQuestionSet, saveQuestionSets, type QuestionSet } from '../question/sets';
 import { resolveQuestionVote } from '../question/votes';
 import { useI18n } from '../i18n/LanguageProvider';
 import type { MessageKey } from '../i18n/messages';
@@ -52,7 +52,15 @@ interface GameContextValue {
   castQuestionVote: (voterId: string, targetId: string) => void;
   playQuestionAgain: () => void;
   questionSets: QuestionSet[];
-  importQuestionSet: (raw: string) => string | null;
+  importQuestionSet: (raw: string) => Promise<string | null> | string | null;
+  openQuestionSets: () => void;
+  setQuestionSetId: (id: string) => void;
+  questionSetId: string;
+  createQuestionSet: () => void;
+  deleteQuestionSet: (id: string) => void;
+  updateQuestionSet: (set: QuestionSet) => void;
+  openQuestionEditor: (id: string) => void;
+  editingQuestionSet: QuestionSet | null;
   questionRound: QuestionRound | null;
   markCurrentSeenAndAdvance: () => void;
   startVoting: () => void;
@@ -91,8 +99,11 @@ export function GameProvider({ children }: { children: ReactNode }) {
   const [editingSetId, setEditingSetId] = useState<string | null>(null);
   const [startError, setStartError] = useState<MessageKey | null>(null);
   const [session, setSession] = useState<PointSession | null>(() => loadPointSession());
+  const [questionSetId, setQuestionSetIdState] = useState('builtin-questions');
+  const [editingQuestionId, setEditingQuestionId] = useState<string | null>(null);
   const [questionSets, setQuestionSets] = useState<QuestionSet[]>(() => loadQuestionSets());
   const [questionRound, setQuestionRound] = useState<QuestionRound | null>(null);
+  const editingQuestionSet = questionSets.find((set) => set.id === editingQuestionId) ?? null;
   const [roundPoints, setRoundPoints] = useState<Record<string, number>>({});
 
   const wordSets = useMemo(() => [BUILTIN_WORD_SET, ...customSets], [customSets]);
@@ -176,6 +187,8 @@ export function GameProvider({ children }: { children: ReactNode }) {
       game,
       questionRound,
       questionSets,
+      questionSetId,
+      editingQuestionSet,
       session,
       roundPoints,
       wordSets,
@@ -189,6 +202,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       },
       openSettings: () => setScreen('settings'),
       openWordSets: () => setScreen('word-sets'),
+      openQuestionSets: () => setScreen('question-sets'),
       openImport: () => setScreen('import'),
       openExport: () => setScreen('export'),
       openEditor: (setId) => {
@@ -258,7 +272,8 @@ export function GameProvider({ children }: { children: ReactNode }) {
       },
       openQuestionSetup: () => setScreen('question-setup'),
       startQuestionGame: () => {
-        const round = createQuestionRound(draft.players, locale, questionSets[0]);
+        const selected = [BUILTIN_QUESTION_SET, ...questionSets].find((set) => set.id === questionSetId) ?? BUILTIN_QUESTION_SET;
+        const round = createQuestionRound(draft.players, locale, selected);
         if (!round) return;
         setQuestionRound(round);
         setSession(emptySession(round.players));
@@ -266,7 +281,8 @@ export function GameProvider({ children }: { children: ReactNode }) {
       },
       playQuestionAgain: () => {
         if (!questionRound) return;
-        const next = createQuestionRound(questionRound.players.map((player) => ({ id: player.id, name: player.name })), locale, questionSets[0]);
+        const selected = [BUILTIN_QUESTION_SET, ...questionSets].find((set) => set.id === questionSetId) ?? BUILTIN_QUESTION_SET;
+        const next = createQuestionRound(questionRound.players.map((player) => ({ id: player.id, name: player.name })), locale, selected);
         if (!next) return;
         setRoundPoints({});
         setQuestionRound(next);
@@ -279,6 +295,19 @@ export function GameProvider({ children }: { children: ReactNode }) {
         saveQuestionSets(next);
         return null;
       },
+      setQuestionSetId: (id) => setQuestionSetIdState(id),
+      createQuestionSet: () => {
+        const set = { id: crypto.randomUUID(), name: 'New questions', builtin: false, groups: [{ id: crypto.randomUUID(), civilianQuestion: '', undercoverQuestion: '' }] };
+        setQuestionSets((current) => { const next = [set, ...current]; saveQuestionSets(next); return next; });
+        setEditingQuestionId(set.id);
+        setScreen('question-editor');
+      },
+      deleteQuestionSet: (id) => {
+        setQuestionSets((current) => { const next = current.filter((set) => set.id !== id); saveQuestionSets(next); return next; });
+        if (questionSetId === id) setQuestionSetIdState(BUILTIN_QUESTION_SET.id);
+      },
+      updateQuestionSet: (set) => setQuestionSets((current) => { const next = current.map((item) => item.id === set.id ? set : item); saveQuestionSets(next); return next; }),
+      openQuestionEditor: (id) => { setEditingQuestionId(id); setScreen('question-editor'); },
       submitQuestionAnswer: (playerId, answer) => {
         setQuestionRound((current) => {
           if (!current || current.phase !== 'answer') return current;
@@ -453,7 +482,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
         setScreen('word-sets');
       },
     };
-  }, [customSets, draft, editingSet, editingSetId, game, locale, questionRound, questionSets, roundPoints, screen, selectedSet, session, startError, t, wordSets]);
+  }, [customSets, draft, editingQuestionSet, editingSet, editingSetId, game, locale, questionRound, questionSetId, questionSets, roundPoints, screen, selectedSet, session, startError, t, wordSets]);
 
   return <GameContext.Provider value={value}>{children}</GameContext.Provider>;
 }

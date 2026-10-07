@@ -36,10 +36,10 @@ export interface QuestionRound {
 
 export function createQuestionRound(players: PlayerDraft[], locale: Locale, set?: QuestionSet): QuestionRound | null {
   if (players.length < 3) return null;
-  const builtin = QUESTION_GROUPS[Math.floor(Math.random() * QUESTION_GROUPS.length)];
   const custom = set && !set.builtin ? set.groups[Math.floor(Math.random() * set.groups.length)] : null;
-  const civilianQuestion = custom?.civilianQuestion ?? builtin.civilian[locale];
-  const undercoverQuestion = custom?.undercoverQuestion ?? builtin.undercover[locale];
+  const builtinGroup = set?.builtin ? QUESTION_GROUPS.find((group) => group.id === set.groups[Math.floor(Math.random() * set.groups.length)]?.id) ?? QUESTION_GROUPS[0] : QUESTION_GROUPS[Math.floor(Math.random() * QUESTION_GROUPS.length)];
+  const civilianQuestion = custom?.civilianQuestion ?? builtinGroup.civilian[locale];
+  const undercoverQuestion = custom?.undercoverQuestion ?? builtinGroup.undercover[locale];
   const order = shuffle(players.map((player) => player.id));
   const undercoverPlayerId = order[Math.floor(Math.random() * order.length)];
   return {

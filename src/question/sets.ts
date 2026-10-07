@@ -4,12 +4,21 @@ export interface QuestionGroupFile {
   undercoverQuestion: string;
 }
 
+import { QUESTION_GROUPS } from './questions';
+
 export interface QuestionSet {
   id: string;
   name: string;
   builtin: boolean;
   groups: QuestionGroupFile[];
 }
+
+export const BUILTIN_QUESTION_SET: QuestionSet = {
+  id: 'builtin-questions',
+  name: 'Starter Questions',
+  builtin: true,
+  groups: QUESTION_GROUPS.map((group) => ({ id: group.id, civilianQuestion: group.civilian.en, undercoverQuestion: group.undercover.en })),
+};
 
 const KEY = 'undercover.questionSets.v1';
 

@@ -6,7 +6,7 @@ import { useGame } from '../state/GameProvider';
 import styles from './HomeScreen.module.css';
 
 export function HomeScreen() {
-  const { openSetup, openQuestionSetup, openSettings, openWordSets, openImport, openExport } = useGame();
+  const { openSetup, openQuestionSetup, openSettings, openWordSets, openQuestionSets } = useGame();
   const { t } = useI18n();
 
   return (
@@ -19,15 +19,8 @@ export function HomeScreen() {
         <button type="button" className={styles.secondary} onClick={openQuestionSetup}>{t('questionMode')}</button>
         <p className={styles.note}>{t('questionModeHint')}</p>
       </section>
-      <button type="button" className={styles.secondary} onClick={openWordSets}>
-        {t('wordSets')}
-      </button>
-      <button type="button" className={styles.secondary} onClick={openImport}>
-        {t('importJson')}
-      </button>
-      <button type="button" className={styles.secondary} onClick={openExport}>
-        {t('exportJson')}
-      </button>
+      <button type="button" className={styles.secondary} onClick={openWordSets}>{t('wordSets')}</button>
+      <button type="button" className={styles.secondary} onClick={openQuestionSets}>{t('questionSets')}</button>
       <button type="button" className={styles.secondary} onClick={openSettings}>
         {t('settings')}
       </button>
