@@ -6,6 +6,7 @@ import { EliminationScreen } from './screens/EliminationScreen';
 import { ExportScreen } from './screens/ExportScreen';
 import { GuessScreen } from './screens/GuessScreen';
 import { HomeScreen, SettingsScreen } from './screens/HomeScreen';
+import { QuestionAnswerScreen, QuestionDiscussionScreen, QuestionResultsScreen, QuestionSetupScreen, QuestionVoteScreen } from './screens/QuestionScreens';
 import { ImportScreen } from './screens/ImportScreen';
 import { ResultsScreen } from './screens/ResultsScreen';
 import { RevealScreen } from './screens/RevealScreen';
@@ -43,6 +44,16 @@ function AppRouter() {
       return <GuessScreen />;
     case 'results':
       return <ResultsScreen />;
+    case 'question-setup':
+      return <QuestionSetupScreen />;
+    case 'question-answer':
+      return <QuestionAnswerScreen />;
+    case 'question-discussion':
+      return <QuestionDiscussionScreen />;
+    case 'question-vote':
+      return <QuestionVoteScreen />;
+    case 'question-results':
+      return <QuestionResultsScreen />;
     default:
       return <HomeScreen />;
   }

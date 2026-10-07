@@ -1,6 +1,6 @@
 export type Role = 'civilian' | 'undercover' | 'doesntKnow';
 
-export type AppScreen = 'home' | 'setup' | 'settings' | 'word-sets' | 'editor' | 'import' | 'export' | 'reveal' | 'discussion' | 'voting' | 'elimination' | 'guess' | 'results';
+export type AppScreen = 'home' | 'setup' | 'settings' | 'word-sets' | 'editor' | 'import' | 'export' | 'reveal' | 'discussion' | 'voting' | 'elimination' | 'guess' | 'results' | 'question-setup' | 'question-answer' | 'question-discussion' | 'question-vote' | 'question-results';
 
 export interface WordGroup {
   id: string;

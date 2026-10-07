@@ -6,15 +6,19 @@ import { useGame } from '../state/GameProvider';
 import styles from './HomeScreen.module.css';
 
 export function HomeScreen() {
-  const { openSetup, openSettings, openWordSets, openImport, openExport } = useGame();
+  const { openSetup, openQuestionSetup, openSettings, openWordSets, openImport, openExport } = useGame();
   const { t } = useI18n();
 
   return (
     <ScreenShell title={t('homeTitle')} subtitle={t('homeSubtitle')}>
       <p className={styles.note}>{t('homeNote')}</p>
-      <button type="button" className={styles.primary} onClick={openSetup}>
-        {t('newGame')}
-      </button>
+      <section className={styles.section}>
+        <h2>{t('gameModes')}</h2>
+        <button type="button" className={styles.primary} onClick={openSetup}>{t('newGame')}</button>
+        <p className={styles.note}>{t('wordModeHint')}</p>
+        <button type="button" className={styles.secondary} onClick={openQuestionSetup}>{t('questionMode')}</button>
+        <p className={styles.note}>{t('questionModeHint')}</p>
+      </section>
       <button type="button" className={styles.secondary} onClick={openWordSets}>
         {t('wordSets')}
       </button>

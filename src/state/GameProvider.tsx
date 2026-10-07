@@ -7,6 +7,9 @@ import { applyRoundPoints, emptySession, loadPointSession, roundPointsFor, saveP
 import { SKIP_VOTE_ID, activePlayers, afterElimination, firstActiveIndex, nextActiveIndex, playerInOrder, resolveCompletedVote, wordsMatch } from '../game/results';
 import { addPlayer, balanceRoles, clampSuspects, loadDraft, removePlayer, resizePlayers, saveDraft } from '../game/draft';
 import { clearSessionGame, loadSessionGame, saveSessionGame, screenForPhase } from '../game/sessionGame';
+import { createQuestionRound, type QuestionRound } from '../question/createRound';
+import { loadQuestionSets, parseQuestionSet, saveQuestionSets, type QuestionSet } from '../question/sets';
+import { resolveQuestionVote } from '../question/votes';
 import { useI18n } from '../i18n/LanguageProvider';
 import type { MessageKey } from '../i18n/messages';
 import { blankSet, duplicateSet } from '../wordSets/mutate';
@@ -41,6 +44,16 @@ interface GameContextValue {
   setWordSetId: (wordSetId: string) => void;
   setPlayerName: (playerId: string, name: string) => void;
   startGame: () => void;
+  openQuestionSetup: () => void;
+  startQuestionGame: () => void;
+  submitQuestionAnswer: (playerId: string, answer: string) => void;
+  revealCivilianQuestion: () => void;
+  startQuestionVoting: () => void;
+  castQuestionVote: (voterId: string, targetId: string) => void;
+  playQuestionAgain: () => void;
+  questionSets: QuestionSet[];
+  importQuestionSet: (raw: string) => string | null;
+  questionRound: QuestionRound | null;
   markCurrentSeenAndAdvance: () => void;
   startVoting: () => void;
   castVote: (voterId: string, suspectIds: string[]) => void;
@@ -69,7 +82,7 @@ function updateDraft(setter: (current: SetupDraft) => SetupDraft) {
 }
 
 export function GameProvider({ children }: { children: ReactNode }) {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const restored = useMemo(() => loadSessionGame(), []);
   const [screen, setScreen] = useState<AppScreen>(() => (restored ? screenForPhase(restored.phase) : 'home'));
   const [draft, setDraft] = useState<SetupDraft>(() => loadDraft());
@@ -78,6 +91,8 @@ export function GameProvider({ children }: { children: ReactNode }) {
   const [editingSetId, setEditingSetId] = useState<string | null>(null);
   const [startError, setStartError] = useState<MessageKey | null>(null);
   const [session, setSession] = useState<PointSession | null>(() => loadPointSession());
+  const [questionSets, setQuestionSets] = useState<QuestionSet[]>(() => loadQuestionSets());
+  const [questionRound, setQuestionRound] = useState<QuestionRound | null>(null);
   const [roundPoints, setRoundPoints] = useState<Record<string, number>>({});
 
   const wordSets = useMemo(() => [BUILTIN_WORD_SET, ...customSets], [customSets]);
@@ -100,6 +115,23 @@ export function GameProvider({ children }: { children: ReactNode }) {
     setSession((current) => applyRoundPoints(current ?? emptySession(game.players), game, earned));
     setGame((current) => (current ? { ...current, pointsAwarded: true } : current));
   }, [game]);
+
+  useEffect(() => {
+    if (!questionRound || questionRound.phase !== 'results' || questionRound.pointsAwarded) return;
+    const earned: Record<string, number> = {};
+    for (const player of questionRound.players) earned[player.id] = questionRound.result === 'civilianWin' && player.role === 'civilian' ? 1 : questionRound.result === 'undercoverWin' && player.role === 'undercover' ? 2 : 0;
+    setRoundPoints(earned);
+    setSession((current) => {
+      const base = current ?? emptySession(questionRound.players);
+      return { ...base, players: base.players.map((player) => ({ ...player, points: player.points + (earned[player.id] ?? 0) })) };
+    });
+    setQuestionRound((current) => (current ? { ...current, pointsAwarded: true } : current));
+  }, [questionRound]);
+
+  useEffect(() => {
+    if (!questionRound) return;
+    setScreen(questionRound.phase === 'voting' ? 'question-vote' : questionRound.phase === 'results' ? 'question-results' : questionRound.phase === 'board' ? 'question-discussion' : 'question-answer');
+  }, [questionRound]);
 
   useEffect(() => {
     if (!game) return;
@@ -133,6 +165,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
     setGame(null);
     setSession(null);
     setRoundPoints({});
+    setQuestionRound(null);
     setScreen('home');
   }
 
@@ -141,6 +174,8 @@ export function GameProvider({ children }: { children: ReactNode }) {
       screen,
       draft,
       game,
+      questionRound,
+      questionSets,
       session,
       roundPoints,
       wordSets,
@@ -220,6 +255,53 @@ export function GameProvider({ children }: { children: ReactNode }) {
         setRoundPoints({});
         setGame(nextGame);
         setScreen('reveal');
+      },
+      openQuestionSetup: () => setScreen('question-setup'),
+      startQuestionGame: () => {
+        const round = createQuestionRound(draft.players, locale, questionSets[0]);
+        if (!round) return;
+        setQuestionRound(round);
+        setSession(emptySession(round.players));
+        setScreen('question-answer');
+      },
+      playQuestionAgain: () => {
+        if (!questionRound) return;
+        const next = createQuestionRound(questionRound.players.map((player) => ({ id: player.id, name: player.name })), locale, questionSets[0]);
+        if (!next) return;
+        setRoundPoints({});
+        setQuestionRound(next);
+      },
+      importQuestionSet: (raw) => {
+        const parsed = parseQuestionSet(raw);
+        if (!parsed.ok) return parsed.error;
+        const next = [parsed.set, ...questionSets];
+        setQuestionSets(next);
+        saveQuestionSets(next);
+        return null;
+      },
+      submitQuestionAnswer: (playerId, answer) => {
+        setQuestionRound((current) => {
+          if (!current || current.phase !== 'answer') return current;
+          const currentId = current.playerOrder[current.turnIndex];
+          if (currentId !== playerId || current.answers[playerId] || !answer.trim()) return current;
+          const answers = { ...current.answers, [playerId]: answer.trim() };
+          const nextIndex = current.turnIndex + 1;
+          if (nextIndex >= current.playerOrder.length) return { ...current, answers, phase: 'board' };
+          return { ...current, answers, turnIndex: nextIndex };
+        });
+      },
+      revealCivilianQuestion: () => setQuestionRound((current) => (current ? { ...current, civilianQuestionRevealed: true } : current)),
+      startQuestionVoting: () => setQuestionRound((current) => (current?.civilianQuestionRevealed ? { ...current, phase: 'voting', votes: {}, voteIndex: 0 } : current)),
+      castQuestionVote: (voterId, targetId) => {
+        setQuestionRound((current) => {
+          if (!current || current.phase !== 'voting') return current;
+          if (voterId === 'dismiss') return { ...current, notice: undefined };
+          if (current.playerOrder[current.voteIndex] !== voterId || current.votes[voterId]) return current;
+          if (targetId !== SKIP_VOTE_ID && (targetId === voterId || !current.players.some((player) => player.id === targetId))) return current;
+          const votes = { ...current.votes, [voterId]: targetId };
+          const next = { ...current, votes, voteIndex: Math.min(current.voteIndex + 1, current.playerOrder.length - 1) };
+          return Object.keys(votes).length >= current.players.length ? resolveQuestionVote(next) : next;
+        });
       },
       markCurrentSeenAndAdvance: () => {
         setGame((current) => {
@@ -371,7 +453,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
         setScreen('word-sets');
       },
     };
-  }, [customSets, draft, editingSet, editingSetId, game, roundPoints, screen, selectedSet, session, startError, t, wordSets]);
+  }, [customSets, draft, editingSet, editingSetId, game, locale, questionRound, questionSets, roundPoints, screen, selectedSet, session, startError, t, wordSets]);
 
   return <GameContext.Provider value={value}>{children}</GameContext.Provider>;
 }
