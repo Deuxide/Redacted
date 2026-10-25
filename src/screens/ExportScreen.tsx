@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Button } from '../components/Primitives';
 import { ScreenShell } from '../components/ScreenShell';
 import { useI18n } from '../i18n/LanguageProvider';
 import { useGame } from '../state/GameProvider';
@@ -14,7 +15,10 @@ export function ExportScreen() {
   const chosen = wordSets.find((set) => set.id === setId) ?? selectedSet;
 
   return (
-    <ScreenShell title={t('exportTitle')} subtitle={t('exportSubtitle')} onBack={goHome}>
+    <ScreenShell title={t('exportTitle')} subtitle={t('exportSubtitle')} onBack={goHome}
+      footer={<Button wide onClick={() => { const result = downloadWordSet(chosen); setError(result.ok ? null : result.error); }}>
+        {t('download', { name: chosen.name })}
+      </Button>}>
       <div className={styles.sets}>
         {wordSets.map((set) => (
           <button key={set.id} type="button" className={set.id === chosen.id ? styles.selected : styles.set} onClick={() => { setSetId(set.id); setError(null); }}>
@@ -23,10 +27,7 @@ export function ExportScreen() {
           </button>
         ))}
       </div>
-      {error ? <p className={styles.warn}>{t('exportNeedsWords')}</p> : null}
-      <button type="button" className={styles.primary} onClick={() => { const result = downloadWordSet(chosen); setError(result.ok ? null : result.error); }}>
-        {t('download', { name: chosen.name })}
-      </button>
+      {error ? <p className={styles.warn} role="alert" aria-live="polite">{t('exportNeedsWords')}</p> : null}
     </ScreenShell>
   );
 }

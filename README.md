@@ -51,6 +51,14 @@ A new vote needs 3 players, or 4 if a Doesn't Know player is still in. A vote ne
 
 A voted-out Doesn't Know player gets one guess at the civilian word. A correct guess is an individual win. It does not end the round.
 
+### 0-undercover Word rounds
+
+Word Undercover rounds may be started with no Undercover players. Civilians all receive the same civilian word, while Doesn't Know players receive no word. In these rounds, the usual three-role draw does not apply, and votes can continue with 3 active players even while a Doesn't Know player remains.
+
+Civilians win only after every Doesn't Know player has been voted out without any of them guessing the civilian word correctly. A correct guess remains an individual win and does not end the round. If only Doesn't Know players remain and nobody has guessed the civilian word, the Doesn't Know faction wins. If a correct guess means neither faction can meet its win condition, the round can end without a faction winner when too few players remain to vote. There is no Undercover-win outcome in a round with no Undercover players.
+
+This option applies only to Word Undercover. Question Undercover always has exactly one Undercover player.
+
 Skip Vote is a choice, not a player. If Skip wins or ties for the top, nobody is eliminated.
 
 ## Session points

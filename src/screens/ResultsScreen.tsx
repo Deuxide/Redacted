@@ -1,4 +1,5 @@
 import { RoleBadge } from '../components/RoleBadge';
+import { Button } from '../components/Primitives';
 import { Scoreboard } from '../components/Scoreboard';
 import { ScreenShell } from '../components/ScreenShell';
 import { tallyVotes } from '../game/results';
@@ -19,13 +20,21 @@ export function ResultsScreen() {
   }
 
   const tally = tallyVotes(game);
-  const title = tally.outcome === 'draw' ? t('drawResult') : tally.outcome === 'civilianWin' ? t('civiliansWin') : tally.outcome === 'doesntKnowWin' ? t('doesntKnowWin') : t('undercoverWin');
-  const why = tally.outcome === 'draw' ? t('drawReason') : tally.outcome === 'civilianWin' ? t('whyCivilians') : tally.outcome === 'doesntKnowWin' ? t('whyDoesntKnow') : t('whyUndercover');
   const hasUndercover = game.players.some((player) => player.role === 'undercover');
   const hasBlank = game.players.some((player) => player.role === 'doesntKnow');
+  const title = tally.outcome === 'draw' ? t('drawResult')
+    : tally.outcome === 'civilianWin' ? t('civiliansWin')
+      : tally.outcome === 'doesntKnowWin' ? t('doesntKnowWin')
+        : tally.outcome === 'continue' && !hasUndercover ? t('noFactionWin')
+          : t('undercoverWin');
+  const why = tally.outcome === 'draw' ? t('drawReason')
+    : tally.outcome === 'civilianWin' ? t(hasUndercover ? 'whyCivilians' : 'whyCiviliansNoUndercover')
+      : tally.outcome === 'doesntKnowWin' ? t('whyDoesntKnow')
+        : tally.outcome === 'continue' && !hasUndercover ? t('whyNoFactionWin')
+          : t('whyUndercover');
 
   return (
-    <ScreenShell title={t('gameOver')} onBack={leaveGame}>
+    <ScreenShell title={t('gameOver')} onBack={leaveGame} footer={<Button wide onClick={continueSession}>{t('continueGame')}</Button>}>
       <section className={tally.outcome === 'draw' ? styles.draw : tally.civiliansWin ? styles.win : styles.lose} aria-live="polite">
         <p>{t('gameOver')}</p>
         <h2>{title}</h2>
@@ -116,12 +125,11 @@ export function ResultsScreen() {
           </article>
         ))}
       </section>
-      <button type="button" className={styles.primary} onClick={continueSession}>{t('continueGame')}</button>
-      <button type="button" className={styles.secondary} onClick={playAgain}>{t('playAgain')}</button>
-      <button type="button" className={styles.secondary} onClick={newGame}>
+      <Button variant="secondary" wide onClick={playAgain}>{t('playAgain')}</Button>
+      <Button variant="secondary" wide onClick={newGame}>
         {t('newGame')}
-      </button>
-      <button type="button" className={styles.secondary} onClick={leaveGame}>{t('backToMenu')}</button>
+      </Button>
+      <Button variant="quiet" wide onClick={leaveGame}>{t('backToMenu')}</Button>
     </ScreenShell>
   );
 }

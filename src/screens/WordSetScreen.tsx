@@ -1,3 +1,4 @@
+import { Button, Card } from '../components/Primitives';
 import { ScreenShell } from '../components/ScreenShell';
 import { useI18n } from '../i18n/LanguageProvider';
 import { useGame } from '../state/GameProvider';
@@ -9,17 +10,17 @@ export function WordSetsScreen() {
   const { t } = useI18n();
 
   return (
-    <ScreenShell title={t('wordSets')} subtitle={t('wordSetsSubtitle')} onBack={goHome}>
+    <ScreenShell title={t('wordSets')} subtitle={t('wordSetsSubtitle')} onBack={goHome}
+      footer={<Button wide onClick={createCustomSet}>{t('newSet')}</Button>}>
       <div className={styles.row}>
-        <button type="button" className={styles.primary} onClick={createCustomSet}>{t('newSet')}</button>
-        <button type="button" className={styles.secondary} onClick={openImport}>{t('import')}</button>
-        <button type="button" className={styles.secondary} onClick={openExport}>{t('export')}</button>
+        <Button variant="secondary" onClick={openImport}>{t('import')}</Button>
+        <Button variant="secondary" onClick={openExport}>{t('export')}</Button>
       </div>
       {wordSets.map((set) => {
         const ready = playableGroups(set).length;
         const selected = set.id === selectedSet.id;
         return (
-          <article key={set.id} className={styles.card}>
+          <Card key={set.id} className={styles.card}>
             <h2>{set.name}</h2>
             <p>{set.description || t('noDescription')}</p>
             <small>
@@ -28,18 +29,18 @@ export function WordSetsScreen() {
               {selected ? ` · ${t('usedForGames')}` : ''}
             </small>
             <div className={styles.actions}>
-              <button type="button" onClick={() => setWordSetId(set.id)}>{t('use')}</button>
+              <Button variant="secondary" onClick={() => setWordSetId(set.id)} aria-pressed={selected}>{t('use')}</Button>
               {set.builtin ? (
-                <button type="button" onClick={() => duplicateWordSet(set.id)}>{t('duplicate')}</button>
+                <Button variant="secondary" onClick={() => duplicateWordSet(set.id)}>{t('duplicate')}</Button>
               ) : (
                 <>
-                  <button type="button" onClick={() => openEditor(set.id)}>{t('edit')}</button>
-                  <button type="button" onClick={() => duplicateWordSet(set.id)}>{t('duplicate')}</button>
-                  <button type="button" className={styles.danger} onClick={() => deleteWordSet(set.id)}>{t('delete')}</button>
+                  <Button variant="secondary" onClick={() => openEditor(set.id)}>{t('edit')}</Button>
+                  <Button variant="secondary" onClick={() => duplicateWordSet(set.id)}>{t('duplicate')}</Button>
+                  <Button variant="danger" onClick={() => deleteWordSet(set.id)}>{t('delete')}</Button>
                 </>
               )}
             </div>
-          </article>
+          </Card>
         );
       })}
     </ScreenShell>

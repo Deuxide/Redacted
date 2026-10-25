@@ -9,17 +9,17 @@
 }
 
 .win {
-  background: #173526;
+  background: var(--civilian-surface);
   border: 2px solid var(--civilian);
 }
 
 .lose {
-  background: #3a221f;
+  background: var(--undercover-surface);
   border: 2px solid var(--undercover);
 }
 
 .draw {
-  background: #243044;
+  background: var(--raised);
   border: 2px solid var(--color-border);
 }
 
@@ -49,15 +49,15 @@
 }
 
 .civilianCard {
-  background: #173526;
+  background: var(--civilian-surface);
 }
 
 .undercoverCard {
-  background: #3a221f;
+  background: var(--undercover-surface);
 }
 
 .blankCard {
-  background: #1c2b40;
+  background: var(--doesnt-know-surface);
 }
 
 .civilianCard h2,
@@ -96,23 +96,13 @@
   font-size: 1.05rem;
 }
 
-.primary,
-.secondary {
-  width: 100%;
-  min-height: 3.4rem;
-  border-radius: 1rem;
-  font: inherit;
-  font-weight: 800;
-}
-
-.primary {
-  border: 0;
-  background: var(--color-primary);
-  color: var(--on-accent);
-}
-
-.secondary {
+.word {
+  min-height: 3rem;
+  margin-top: var(--space-2);
   border: 1px solid var(--line);
-  background: var(--card);
+  border-radius: var(--radius-sm);
+  padding: 0.75rem 0.85rem;
+  background: var(--bg);
   color: var(--text);
+  font: inherit;
 }

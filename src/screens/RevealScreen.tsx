@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { Button, ProgressIndicator } from '../components/Primitives';
 import { RoleBadge } from '../components/RoleBadge';
 import { ScreenShell } from '../components/ScreenShell';
 import { useI18n } from '../i18n/LanguageProvider';
@@ -30,14 +31,16 @@ function PlayerTurn({ game, onLeave, onPass }: { game: ActiveGame; onLeave: () =
   const { t } = useI18n();
   const [step, setStep] = useState<'pass' | 'privacy' | 'secret' | 'clearing'>('pass');
   const player = playerInOrder(game.players, game.playerOrder, game.revealIndex);
-  if (!player) return null;
-  const stepNumber = game.revealIndex + 1;
 
   useEffect(() => {
-    if (step !== 'clearing') return;
+    if (step !== 'clearing' || !player) return;
     const timer = window.setTimeout(onPass, HANDOFF_MS);
     return () => window.clearTimeout(timer);
-  }, [onPass, step]);
+  }, [onPass, player, step]);
+
+  if (!player) return null;
+  const stepNumber = game.revealIndex + 1;
+  const stageIndex = step === 'pass' ? 1 : step === 'privacy' ? 2 : 3;
 
   if (step === 'clearing') {
     return (
@@ -49,35 +52,32 @@ function PlayerTurn({ game, onLeave, onPass }: { game: ActiveGame; onLeave: () =
   }
 
   return (
-    <ScreenShell title={`${t('playerLabel', { n: stepNumber })}`} subtitle={t('passPhone', { name: player.name })} onBack={step === 'pass' ? onLeave : undefined}>
+    <ScreenShell title={t('playerLabel', { n: stepNumber })} subtitle={t('passPhone', { name: player.name })} onBack={step === 'pass' ? onLeave : undefined}
+      footer={
+        step === 'pass' ? <Button wide onClick={() => setStep('privacy')}>{t('imPlayer', { name: player.name })}</Button>
+          : step === 'privacy' ? <Button wide onClick={() => setStep('secret')}>{game.showRoleDuringReveal ? t('revealWord') : t('showInfo')}</Button>
+            : step === 'secret' ? <Button wide variant="secondary" onClick={() => setStep('clearing')}>{t('hidePass')}</Button>
+              : null
+      }
+    >
+      <ProgressIndicator value={stageIndex} total={3} label={t('revealSteps')} />
+      <p className={styles.turnEyebrow}>{t('yourTurn')}</p>
       <p className={styles.player}>{player.name}</p>
       <p className={styles.step}>{t('playerStep', { n: stepNumber, total: game.players.length })}</p>
-      {step === 'pass' ? (
-        <button type="button" className={styles.reveal} onClick={() => setStep('privacy')}>
-          {t('imPlayer', { name: player.name })}
-        </button>
-      ) : null}
-      {step === 'privacy' ? (
-        <>
-          <p className={styles.warning}>{t('privacy')}</p>
-          <button type="button" className={styles.reveal} onClick={() => setStep('secret')}>
-            {game.showRoleDuringReveal ? t('revealWord') : t('showInfo')}
-          </button>
-        </>
-      ) : null}
+      {step === 'privacy' ? <p className={styles.warning}>{t('privacy')}</p> : null}
       {step === 'secret' ? (
-        <SecretCard showRole={game.showRoleDuringReveal} role={player.role} word={player.word} onHide={() => setStep('clearing')} />
+        <SecretCard showRole={game.showRoleDuringReveal} role={player.role} word={player.word} />
       ) : null}
     </ScreenShell>
   );
 }
 
-function SecretCard({ showRole, role, word, onHide }: { showRole: boolean; role: Role; word: string; onHide: () => void }) {
+function SecretCard({ showRole, role, word }: { showRole: boolean; role: Role; word: string }) {
   const { t } = useI18n();
   const unnamed = !showRole;
   return (
     <>
-      <div className={styles.secret}>
+      <div className={styles.secret} aria-live="polite">
         {unnamed ? <span>{t('yourInformation')}</span> : <span>{t('yourRole')}</span>}
         {unnamed ? null : <RoleBadge role={role} />}
         {role === 'doesntKnow' ? (
@@ -89,9 +89,6 @@ function SecretCard({ showRole, role, word, onHide }: { showRole: boolean; role:
           </>
         )}
       </div>
-      <button type="button" className={styles.pass} onClick={onHide}>
-        {t('hidePass')}
-      </button>
     </>
   );
 }

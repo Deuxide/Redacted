@@ -1,4 +1,5 @@
 import { RoleBadge } from '../components/RoleBadge';
+import { Button } from '../components/Primitives';
 import { ScreenShell } from '../components/ScreenShell';
 import { SKIP_VOTE_ID, activePlayers, canVoteAgain, tallyVotes } from '../game/results';
 import { useI18n } from '../i18n/LanguageProvider';
@@ -21,7 +22,12 @@ export function EliminationScreen() {
   const skipped = !tally.tied && tally.leaders.length === 1 && tally.leaders[0]?.id === SKIP_VOTE_ID;
   const tied = tally.tied;
   return (
-    <ScreenShell title={t('roundLabel', { n: game.round })} onBack={leaveGame}>
+    <ScreenShell title={t('roundLabel', { n: game.round })} onBack={leaveGame}
+      footer={
+        tied || skipped
+          ? <Button wide onClick={canVoteAgain(game.players) ? revote : continueAfterElimination}>{canVoteAgain(game.players) ? t('tieRevote') : t('seeResults')}</Button>
+          : <Button wide onClick={continueAfterElimination}>{canVoteAgain(game.players) ? t('continueVote') : t('seeResults')}</Button>
+      }>
       {tied ? (
         <>
           <h2 className={styles.section}>{t('tieLabel')}</h2>
@@ -44,15 +50,6 @@ export function EliminationScreen() {
         </article>
       ) : null}
       <p>{t('activeLeft', { count: activePlayers(game.players).length })}</p>
-      {tied || skipped ? (
-        <button type="button" className={styles.primary} onClick={canVoteAgain(game.players) ? revote : continueAfterElimination}>
-          {canVoteAgain(game.players) ? t('tieRevote') : t('seeResults')}
-        </button>
-      ) : (
-        <button type="button" className={styles.primary} onClick={continueAfterElimination}>
-          {canVoteAgain(game.players) ? t('continueVote') : t('seeResults')}
-        </button>
-      )}
     </ScreenShell>
   );
 }

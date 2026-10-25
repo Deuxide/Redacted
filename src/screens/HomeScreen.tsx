@@ -1,4 +1,5 @@
 import { LanguageSwitcher } from '../components/LanguageSwitcher';
+import { Button, Card } from '../components/Primitives';
 import { ScreenShell } from '../components/ScreenShell';
 import { ThemePicker } from '../components/ThemePicker';
 import { useI18n } from '../i18n/LanguageProvider';
@@ -10,20 +11,37 @@ export function HomeScreen() {
   const { t } = useI18n();
 
   return (
-    <ScreenShell title={t('homeTitle')} subtitle={t('homeSubtitle')}>
+    <ScreenShell
+      title={t('homeTitle')}
+      subtitle={t('homeSubtitle')}
+      footer={<Button wide onClick={openSetup}>{t('newGame')}</Button>}
+    >
       <p className={styles.note}>{t('homeNote')}</p>
       <section className={styles.section}>
         <h2>{t('gameModes')}</h2>
-        <button type="button" className={styles.primary} onClick={openSetup}>{t('newGame')}</button>
-        <p className={styles.note}>{t('wordModeHint')}</p>
-        <button type="button" className={styles.secondary} onClick={openQuestionSetup}>{t('questionMode')}</button>
-        <p className={styles.note}>{t('questionModeHint')}</p>
+        <Card className={styles.modeCard}>
+          <span className={styles.modeMark} aria-hidden="true">01</span>
+          <div>
+            <h3>{t('newGame')}</h3>
+            <p>{t('wordModeHint')}</p>
+          </div>
+        </Card>
+        <Card className={styles.modeCard}>
+          <span className={styles.modeMark} aria-hidden="true">02</span>
+          <div>
+            <h3>{t('questionMode')}</h3>
+            <p>{t('questionModeHint')}</p>
+          </div>
+          <Button variant="secondary" onClick={openQuestionSetup}>{t('questionMode')}</Button>
+        </Card>
       </section>
-      <button type="button" className={styles.secondary} onClick={openWordSets}>{t('wordSets')}</button>
-      <button type="button" className={styles.secondary} onClick={openQuestionSets}>{t('questionSets')}</button>
-      <button type="button" className={styles.secondary} onClick={openSettings}>
+      <nav className={styles.links} aria-label={t('home')}>
+        <Button variant="quiet" onClick={openWordSets}>{t('wordSets')}</Button>
+        <Button variant="quiet" onClick={openQuestionSets}>{t('questionSets')}</Button>
+        <Button variant="quiet" onClick={openSettings}>
         {t('settings')}
-      </button>
+        </Button>
+      </nav>
       <LanguageSwitcher />
     </ScreenShell>
   );

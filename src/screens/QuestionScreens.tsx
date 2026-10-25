@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { Button, Card, ChoiceRow, ProgressIndicator } from '../components/Primitives';
 import { Scoreboard } from '../components/Scoreboard';
 import { ScreenShell } from '../components/ScreenShell';
 import { SKIP_VOTE_ID } from '../game/results';
@@ -8,13 +9,12 @@ import { BUILTIN_QUESTION_SET } from '../question/sets';
 import { useGame } from '../state/GameProvider';
 import { MIN_PLAYERS } from '../types/game';
 import styles from './WordSetScreen.module.css';
-import setup from './SetupScreen.module.css';
 
 export function QuestionSetupScreen() {
   const { draft, questionSets, questionSetId, setQuestionSetId, goHome, addPlayer, removePlayer, setPlayerName, startQuestionGame } = useGame();
   const { t } = useI18n();
   return (
-    <ScreenShell title={t('questionMode')} subtitle={t('questionModeHint')} onBack={goHome} footer={<button type="button" className={setup.start} onClick={startQuestionGame} disabled={draft.playerCount < MIN_PLAYERS}>{t('startQuestions')}</button>}>
+    <ScreenShell title={t('questionMode')} subtitle={t('questionModeHint')} onBack={goHome} footer={<Button wide onClick={startQuestionGame} disabled={draft.playerCount < MIN_PLAYERS}>{t('startQuestions')}</Button>}>
       <p>{t('lobbyHint')}</p>
       <label className={styles.field}>
         {t('questionSet')}
@@ -33,7 +33,7 @@ export function QuestionSetupScreen() {
           </li>
         ))}
       </ul>
-      <button type="button" className={setup.secondary} onClick={addPlayer}>{t('addPlayer')}</button>
+      <Button variant="secondary" wide onClick={addPlayer}>{t('addPlayer')}</Button>
     </ScreenShell>
   );
 }
@@ -50,27 +50,38 @@ export function QuestionAnswerScreen() {
   if (!questionRound || questionRound.phase !== 'answer') return null;
   const player = questionRound.players.find((entry) => entry.id === questionRound.playerOrder[questionRound.turnIndex]);
   if (!player) return null;
+  const stageIndex = step === 'pass' ? 1 : step === 'answer' ? 2 : 3;
   return (
-    <ScreenShell key={`${questionRound.id}-${player.id}-${step}`} title={player.name} subtitle={t('passPhone', { name: player.name })} onBack={step === 'pass' ? leaveGame : undefined}>
-      {step === 'pass' ? <button type="button" className={setup.start} onClick={() => setStep('answer')}>{t('revealQuestion')}</button> : null}
+    <ScreenShell
+      key={`${questionRound.id}-${player.id}-${step}`}
+      title={player.name}
+      subtitle={t('passPhone', { name: player.name })}
+      onBack={step === 'pass' ? leaveGame : undefined}
+      footer={
+        step === 'pass' ? <Button wide onClick={() => setStep('answer')}>{t('revealQuestion')}</Button>
+          : step === 'answer' ? <Button wide disabled={!text.trim()} onClick={() => setStep('done')}>{t('submitAnswer')}</Button>
+            : <Button wide onClick={() => submitQuestionAnswer(player.id, text)}>{t('passNext')}</Button>
+      }
+    >
+      <ProgressIndicator value={stageIndex} total={3} label={t('revealSteps')} />
+      <p className={styles.turnEyebrow}>{t('yourTurn')}</p>
       {step === 'answer' ? (
         <>
-          <article className={styles.card}>
+          <Card className={styles.card}>
             <p className={styles.note}>{t('yourQuestion')}</p>
             <strong>{player.question}</strong>
-          </article>
+          </Card>
           <label className={styles.field}>
             {t('yourAnswer')}
             <textarea value={text} maxLength={160} placeholder={t('yourAnswer')} aria-label={t('yourAnswer')} onChange={(event) => setText(event.target.value)} />
+            <small className={styles.counter} role="status">{t('answerCharacterCount', { count: text.length })}</small>
           </label>
-          <button type="button" className={setup.start} disabled={!text.trim()} onClick={() => setStep('done')}>{t('submitAnswer')}</button>
         </>
       ) : null}
       {step === 'done' ? (
         <>
           <p>{t('answerSubmitted')}</p>
           <p>{t('passNext')}</p>
-          <button type="button" className={setup.start} onClick={() => submitQuestionAnswer(player.id, text)}>{t('passNext')}</button>
         </>
       ) : null}
     </ScreenShell>
@@ -82,17 +93,14 @@ export function QuestionDiscussionScreen() {
   const { t } = useI18n();
   if (!questionRound || questionRound.phase !== 'board') return null;
   return (
-    <ScreenShell title={t('answersTitle')} onBack={leaveGame}>
+    <ScreenShell title={t('answersTitle')} onBack={leaveGame} footer={questionRound.civilianQuestionRevealed ? <Button wide onClick={startQuestionVoting}>{t('startVoting')}</Button> : undefined}>
       {questionRound.playerOrder.map((id) => {
         const player = questionRound.players.find((entry) => entry.id === id);
-        return <article key={id} className={styles.card}><h2>{player?.name}</h2><p>{questionRound.answers[id]}</p></article>;
+        return <Card key={id} className={styles.card}><h2>{player?.name}</h2><p>{questionRound.answers[id]}</p></Card>;
       })}
-      {questionRound.civilianQuestionRevealed ? <p>{t('civilianQuestion')}: {questionRound.civilianQuestion}</p> : <button type="button" className={setup.secondary} onClick={revealCivilianQuestion}>{t('revealCivilianQuestion')}</button>}
+      {questionRound.civilianQuestionRevealed ? <p>{t('civilianQuestion')}: {questionRound.civilianQuestion}</p> : <Button variant="secondary" wide onClick={revealCivilianQuestion}>{t('revealCivilianQuestion')}</Button>}
       {questionRound.civilianQuestionRevealed ? (
-        <>
-          <p>{t('questionTalk')}</p>
-          <button type="button" className={setup.start} onClick={startQuestionVoting}>{t('startVoting')}</button>
-        </>
+        <p>{t('questionTalk')}</p>
       ) : null}
     </ScreenShell>
   );
@@ -108,24 +116,30 @@ export function QuestionVoteScreen() {
   if (!questionRound || questionRound.phase !== 'voting' || !voterId) return null;
   if (questionRound.notice) {
     return (
-      <ScreenShell title={questionRound.notice === 'tie' ? t('tieLabel') : t('voteSkipped')} onBack={leaveGame}>
+      <ScreenShell title={questionRound.notice === 'tie' ? t('tieLabel') : t('voteSkipped')} onBack={leaveGame}
+        footer={<Button wide onClick={() => castQuestionVote('dismiss', 'dismiss')}>{t('continueVoting')}</Button>}>
         <p>{questionRound.notice === 'tie' ? t('tieAgain') : t('skipAgain')}</p>
-        <button type="button" className={setup.start} onClick={() => castQuestionVote('dismiss', 'dismiss')}>{t('tieRevote')}</button>
       </ScreenShell>
     );
   }
   const voter = questionRound.players.find((player) => player.id === voterId);
   return (
-    <ScreenShell title={voter?.name ?? ''} subtitle={t('passPhone', { name: voter?.name ?? '' })} onBack={step === 'pass' ? leaveGame : undefined}>
-      {step === 'pass' ? <button type="button" className={setup.start} onClick={() => setStep('choose')}>{t('imPlayer', { name: voter?.name ?? '' })}</button> : null}
+    <ScreenShell
+      title={voter?.name ?? ''}
+      subtitle={t('passPhone', { name: voter?.name ?? '' })}
+      onBack={step === 'pass' ? leaveGame : undefined}
+      footer={step === 'pass' ? <Button wide onClick={() => setStep('choose')}>{t('imPlayer', { name: voter?.name ?? '' })}</Button>
+        : <Button wide disabled={!selected} onClick={() => castQuestionVote(voterId, selected)}>{t('confirmHide')}</Button>}
+    >
+      <ProgressIndicator value={step === 'pass' ? 1 : 2} total={2} label={t('votingSteps')} />
+      <p className={styles.turnEyebrow}>{t('yourTurn')}</p>
       {step === 'choose' ? (
         <>
           <p>{t('whoDifferent')}</p>
           {questionRound.players.filter((player) => player.id !== voterId).map((player) => (
-            <button key={player.id} type="button" className={setup.secondary} aria-pressed={selected === player.id} onClick={() => setSelected(player.id)}>{player.name}</button>
+            <ChoiceRow key={player.id} aria-pressed={selected === player.id} onClick={() => setSelected(player.id)}>{player.name}</ChoiceRow>
           ))}
-          <button type="button" className={setup.secondary} aria-pressed={selected === SKIP_VOTE_ID} onClick={() => setSelected(SKIP_VOTE_ID)}>{t('skipVote')}</button>
-          <button type="button" className={setup.start} disabled={!selected} onClick={() => castQuestionVote(voterId, selected)}>{t('confirmHide')}</button>
+          <ChoiceRow aria-pressed={selected === SKIP_VOTE_ID} onClick={() => setSelected(SKIP_VOTE_ID)}>{t('skipVote')}</ChoiceRow>
         </>
       ) : null}
     </ScreenShell>
@@ -139,7 +153,11 @@ export function QuestionResultsScreen() {
   const eliminated = questionRound.players.find((player) => player.id === questionRound.eliminatedId);
   const counts = questionRound.voteHistory.at(-1)?.counts ?? countQuestionVotes(questionRound);
   return (
-    <ScreenShell title={questionRound.result === 'civilianWin' ? t('questionCivilianWin') : t('questionUndercoverWin')} onBack={leaveGame}>
+    <ScreenShell
+      title={questionRound.result === 'civilianWin' ? t('questionCivilianWin') : t('questionUndercoverWin')}
+      onBack={leaveGame}
+      footer={<Button wide onClick={playQuestionAgain}>{t('playAgain')}</Button>}
+    >
       <p>{eliminated?.name} — {eliminated?.role === 'undercover' ? t('undercover') : t('civilian')}</p>
       <h2>{t('civilianQuestion')}</h2>
       <p>{questionRound.civilianQuestion}</p>
@@ -153,8 +171,7 @@ export function QuestionResultsScreen() {
       <h2>{t('roundPoints')}</h2>
       {questionRound.players.map((player) => <p key={player.id}>{player.name} {t('plusPoints', { count: roundPoints[player.id] ?? 0 })}</p>)}
       {session ? <Scoreboard players={session.players} gains={roundPoints} /> : null}
-      <button type="button" className={setup.start} onClick={playQuestionAgain}>{t('playAgain')}</button>
-      <button type="button" className={setup.secondary} onClick={leaveGame}>{t('backToMenu')}</button>
+      <Button variant="quiet" wide onClick={leaveGame}>{t('backToMenu')}</Button>
     </ScreenShell>
   );
 }

@@ -1,3 +1,4 @@
+import { Button, Card, Field } from '../components/Primitives';
 import { ScreenShell } from '../components/ScreenShell';
 import { useI18n } from '../i18n/LanguageProvider';
 import { useGame } from '../state/GameProvider';
@@ -23,20 +24,21 @@ export function WordSetEditorScreen() {
   }
 
   return (
-    <ScreenShell title={t('editTitle')} subtitle={t('editSubtitle')} onBack={openWordSets}>
-      <label className={styles.field}>
+    <ScreenShell title={t('editTitle')} subtitle={t('editSubtitle')} onBack={openWordSets}
+      footer={<Button wide onClick={() => change({ ...editingSet, groups: [...editingSet.groups, blankGroup()] })}>{t('addGroup')}</Button>}>
+      <Field>
         {t('setName')}
         <input value={editingSet.name} maxLength={40} onChange={(event) => change({ ...editingSet, name: event.target.value })} />
-      </label>
-      <label className={styles.field}>
+      </Field>
+      <Field>
         {t('description')}
         <input value={editingSet.description} maxLength={120} onChange={(event) => change({ ...editingSet, description: event.target.value })} />
-      </label>
+      </Field>
       {editingSet.groups.map((group, groupIndex) => {
         const ready = uniqueWords(group.words).length >= MIN_WORDS_PER_GROUP;
         return (
-          <article key={group.id} className={styles.card}>
-            <label className={styles.field}>
+          <Card key={group.id} className={styles.card}>
+            <Field>
               {t('groupLabel')}
               <input
                 value={group.label ?? ''}
@@ -49,7 +51,7 @@ export function WordSetEditorScreen() {
                   })
                 }
               />
-            </label>
+            </Field>
             {group.words.map((word, wordIndex) => (
               <div key={`${group.id}-${wordIndex}`} className={styles.wordRow}>
                 <input
@@ -67,8 +69,8 @@ export function WordSetEditorScreen() {
                     })
                   }
                 />
-                <button
-                  type="button"
+                <Button
+                  variant="quiet"
                   onClick={() =>
                     change({
                       ...editingSet,
@@ -79,13 +81,13 @@ export function WordSetEditorScreen() {
                   }
                 >
                   {t('remove')}
-                </button>
+                </Button>
               </div>
             ))}
-            <p className={ready ? styles.ok : styles.warn}>{ready ? t('readyGroup') : t('shortGroup')}</p>
+            <p className={ready ? styles.ok : styles.warn} role="status" aria-live="polite">{ready ? t('readyGroup') : t('shortGroup')}</p>
             <div className={styles.actions}>
-              <button
-                type="button"
+              <Button
+                variant="secondary"
                 onClick={() =>
                   change({
                     ...editingSet,
@@ -94,17 +96,14 @@ export function WordSetEditorScreen() {
                 }
               >
                 {t('addWord')}
-              </button>
-              <button type="button" className={styles.danger} onClick={() => change({ ...editingSet, groups: editingSet.groups.filter((item) => item.id !== group.id) })}>
+              </Button>
+              <Button variant="danger" onClick={() => change({ ...editingSet, groups: editingSet.groups.filter((item) => item.id !== group.id) })}>
                 {t('deleteGroup')}
-              </button>
+              </Button>
             </div>
-          </article>
+          </Card>
         );
       })}
-      <button type="button" className={styles.primary} onClick={() => change({ ...editingSet, groups: [...editingSet.groups, blankGroup()] })}>
-        {t('addGroup')}
-      </button>
     </ScreenShell>
   );
 }

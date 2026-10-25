@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { Button, ChoiceRow, ProgressIndicator } from '../components/Primitives';
 import { ScreenShell } from '../components/ScreenShell';
 import { useI18n } from '../i18n/LanguageProvider';
 import { SKIP_VOTE_ID, activePlayers, playerInOrder } from '../game/results';
@@ -36,16 +37,17 @@ function VoteTurn({
   const [step, setStep] = useState<'pass' | 'choose' | 'confirm' | 'clearing'>('pass');
   const [selected, setSelected] = useState<string[]>([]);
   const voter = playerInOrder(game.players, game.playerOrder, game.voteIndex);
-  if (!voter) return null;
   const active = activePlayers(game.players);
   const needed = Math.min(game.suspectsPerVote, Math.max(1, active.length - 1));
-  const locked = Boolean(game.votes[voter.id]);
 
   useEffect(() => {
-    if (step !== 'clearing' || locked) return;
+    if (step !== 'clearing' || !voter || game.votes[voter.id]) return;
     const timer = window.setTimeout(() => onVote(voter.id, selected), HANDOFF_MS);
     return () => window.clearTimeout(timer);
-  }, [locked, onVote, selected, step, voter.id]);
+  }, [game.votes, onVote, selected, step, voter]);
+
+  if (!voter) return null;
+  const stageIndex = step === 'pass' ? 1 : step === 'choose' ? 2 : 3;
 
   function toggle(id: string) {
     setSelected((current) => {
@@ -68,16 +70,28 @@ function VoteTurn({
   const names = selected.map((id) => (id === SKIP_VOTE_ID ? t('skipVote') : game.players.find((player) => player.id === id)?.name ?? id));
 
   return (
-    <ScreenShell title={t('voterStep', { n: game.voteIndex + 1 })} subtitle={t('passPhone', { name: voter.name })} onBack={step === 'pass' ? onLeave : undefined}>
+    <ScreenShell
+      title={t('voterStep', { n: game.voteIndex + 1 })}
+      subtitle={t('passPhone', { name: voter.name })}
+      onBack={step === 'pass' ? onLeave : undefined}
+      footer={
+        step === 'pass' ? <Button wide onClick={() => setStep('choose')}>{t('imPlayer', { name: voter.name })}</Button>
+          : step === 'choose' ? <Button wide disabled={selected.length !== needed} onClick={() => setStep('confirm')}>{t('reviewVote')}</Button>
+            : step === 'confirm' ? <Button wide onClick={() => setStep('clearing')}>{t('confirmHide')}</Button>
+              : null
+      }
+    >
+      <ProgressIndicator value={stageIndex} total={3} label={t('votingSteps')} />
+      <ProgressIndicator
+        value={active.filter((player) => game.votes[player.id] || player.id === voter.id).length}
+        total={active.length}
+        label={t('votingTitle')}
+      />
+      <p className={styles.turnEyebrow}>{t('yourTurn')}</p>
       <p className={styles.player}>{voter.name}</p>
       <p className={styles.step}>{t('voteProgress', { n: active.filter((player) => game.votes[player.id] || player.id === voter.id).length, total: active.length })}</p>
       {step === 'pass' ? (
-        <>
-          <p className={styles.copy}>{t('votesHidden')}</p>
-          <button type="button" className={styles.primary} onClick={() => setStep('choose')}>
-            {t('imPlayer', { name: voter.name })}
-          </button>
-        </>
+        <p className={styles.copy}>{t('votesHidden')}</p>
       ) : null}
       {step === 'choose' ? (
         <>
@@ -89,33 +103,33 @@ function VoteTurn({
               .map((player) => {
                 const pressed = selected.includes(player.id);
                 return (
-                  <button key={player.id} type="button" className={styles.choice} aria-pressed={pressed} disabled={player.eliminated} onClick={() => toggle(player.id)}>
-                    <span className={styles.mark}>{pressed ? '●' : '○'}</span>
-                    {player.name}
-                    {player.eliminated ? ` — ${t('cannotVote')}` : ''}
-                  </button>
+                  <ChoiceRow key={player.id} aria-pressed={pressed} disabled={player.eliminated} onClick={() => toggle(player.id)}>
+                    <span className={styles.mark} aria-hidden="true">
+                      <svg viewBox="0 0 20 20"><circle cx="10" cy="10" r="7.5" />{pressed ? <path d="m6.5 10 2.2 2.2 4.8-4.8" /> : null}</svg>
+                    </span>
+                    <span className={styles.choiceContent}>
+                      <strong>{player.name}</strong>
+                      {player.eliminated ? <small>{t('cannotVote')}</small> : null}
+                    </span>
+                  </ChoiceRow>
                 );
               })}
-            <button type="button" className={styles.skip} aria-pressed={selected.includes(SKIP_VOTE_ID)} onClick={() => toggle(SKIP_VOTE_ID)}>
-              <span className={styles.mark}>{selected.includes(SKIP_VOTE_ID) ? '●' : '○'}</span>
+            <ChoiceRow className={styles.skip} aria-pressed={selected.includes(SKIP_VOTE_ID)} onClick={() => toggle(SKIP_VOTE_ID)}>
+              <span className={styles.mark} aria-hidden="true">
+                <svg viewBox="0 0 20 20"><circle cx="10" cy="10" r="7.5" />{selected.includes(SKIP_VOTE_ID) ? <path d="m6.5 10 2.2 2.2 4.8-4.8" /> : null}</svg>
+              </span>
               {t('skipVote')}
-            </button>
+            </ChoiceRow>
           </div>
-          <button type="button" className={styles.primary} disabled={selected.length !== needed} onClick={() => setStep('confirm')}>
-            {t('reviewVote')}
-          </button>
         </>
       ) : null}
       {step === 'confirm' ? (
         <>
           <p className={styles.question}>{t('lockVote')}</p>
-          <p className={styles.copy}>{names.join(', ')}</p>
-          <button type="button" className={styles.primary} onClick={() => setStep('clearing')}>
-            {t('confirmHide')}
-          </button>
-          <button type="button" className={styles.secondary} onClick={() => setStep('choose')}>
+          <p className={styles.selectedNames}>{names.join(', ')}</p>
+          <Button variant="secondary" wide onClick={() => setStep('choose')}>
             {t('changeVote')}
-          </button>
+          </Button>
         </>
       ) : null}
     </ScreenShell>

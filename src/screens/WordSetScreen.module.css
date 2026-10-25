@@ -9,7 +9,7 @@
 }
 
 .ok {
-  color: #8fd0a8;
+  color: var(--color-success);
 }
 
 .warn {
@@ -25,10 +25,7 @@
   flex-wrap: wrap;
 }
 
-.primary,
-.secondary,
 .file,
-.actions button,
 .wordRow button,
 .set,
 .selected {
@@ -36,22 +33,12 @@
   font: inherit;
 }
 
-.primary,
-.secondary,
 .file {
   min-height: 3rem;
   font-weight: 800;
 }
 
-.primary {
-  border: 0;
-  background: var(--color-primary);
-  color: var(--on-accent);
-}
-
-.secondary,
 .file,
-.actions button,
 .wordRow button,
 .set {
   border: 1px solid var(--line);
@@ -74,13 +61,9 @@
 }
 
 .card {
-  border: 1px solid var(--line);
-  border-radius: 1rem;
-  background: var(--card);
-  padding: 0.9rem;
   display: flex;
   flex-direction: column;
-  gap: 0.55rem;
+  gap: var(--space-2);
 }
 
 .card h2 {
@@ -104,6 +87,21 @@
   gap: 0.3rem;
   color: var(--muted);
   font-size: 0.85rem;
+}
+
+.turnEyebrow {
+  margin: 0;
+  color: var(--accent);
+  font-size: var(--text-xs);
+  font-weight: 850;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.counter {
+  align-self: flex-end;
+  font-size: var(--text-xs);
+  font-variant-numeric: tabular-nums;
 }
 
 .field input,

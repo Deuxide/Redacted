@@ -16,7 +16,7 @@ export function createActiveGame(draft: SetupDraft, wordSet: WordSet): ActiveGam
     wordSetId: wordSet.id,
     wordSetName: wordSet.name,
     civilianWord: secret.civilianWord,
-    undercoverWord: secret.undercoverWord,
+    undercoverWord: roles.undercoverCount > 0 ? secret.undercoverWord : '',
     revealIndex: 0,
     voteIndex: 0,
     suspectsPerVote: clampSuspects(draft.suspectsPerVote, roles.undercoverCount + roles.doesntKnowCount, draft.players.length),

@@ -1,44 +1,69 @@
 .note {
   margin: 0;
   color: var(--muted);
-}
-
-.primary,
-.secondary {
-  width: 100%;
-  min-height: 3.25rem;
-  border-radius: 1rem;
-  font: inherit;
-  font-weight: 700;
+  font-size: var(--text-md);
+  line-height: 1.6;
 }
 
 .section {
   display: flex;
   flex-direction: column;
-  gap: 0.65rem;
-  padding: var(--space);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius);
-  background: var(--color-surface);
-  box-shadow: var(--shadow);
+  gap: var(--space-3);
 }
 
-.section h2 {
+.section > h2 {
   margin: 0;
-  font-size: 0.85rem;
-  letter-spacing: 0.06em;
+  color: var(--muted);
+  font-size: var(--text-xs);
+  letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: var(--color-text-secondary);
 }
 
-.primary {
-  border: 0;
-  background: var(--color-primary);
-  color: var(--on-accent);
+.modeCard {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  border-radius: var(--radius-lg);
 }
 
-.secondary {
-  border: 1px solid var(--line);
-  background: var(--card);
-  color: var(--text);
+.modeCard h3,
+.modeCard p {
+  margin: 0;
+}
+
+.modeCard h3 {
+  margin-bottom: var(--space-1);
+  font-size: var(--text-lg);
+}
+
+.modeCard p {
+  color: var(--muted);
+  font-size: var(--text-sm);
+}
+
+.modeMark {
+  width: 2.8rem;
+  height: 2.8rem;
+  display: grid;
+  place-items: center;
+  border-radius: var(--radius-sm);
+  background: color-mix(in srgb, var(--accent) 16%, var(--card));
+  color: var(--accent);
+  font-size: var(--text-sm);
+  font-weight: 850;
+  font-variant-numeric: tabular-nums;
+}
+
+.modeCard button {
+  grid-column: 2 / -1;
+}
+
+.links {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--space-1);
+  margin: 0.2rem 0;
 }

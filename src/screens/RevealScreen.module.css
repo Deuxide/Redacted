@@ -1,7 +1,17 @@
+.turnEyebrow {
+  margin: 0;
+  color: var(--accent);
+  font-size: var(--text-xs);
+  font-weight: 850;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
 .player {
   margin: 0;
-  font-size: clamp(2rem, 10vw, 3.2rem);
+  font-size: var(--text-display);
   line-height: 1.05;
+  letter-spacing: -0.04em;
 }
 
 .step {
@@ -22,7 +32,11 @@
 .warning,
 .handoff {
   margin: 0;
-  font-size: 1.35rem;
+  padding: var(--space-4);
+  border: 1px solid color-mix(in srgb, var(--accent) 45%, var(--line));
+  border-radius: var(--radius-md);
+  background: color-mix(in srgb, var(--accent) 10%, var(--card));
+  font-size: 1.25rem;
   font-weight: 800;
   line-height: 1.25;
 }
@@ -32,15 +46,31 @@
 }
 
 .handoff {
-  font-size: clamp(2rem, 9vw, 3rem);
+  min-height: 35dvh;
+  display: grid;
+  place-items: center;
+  border: 0;
+  background: transparent;
+  text-align: center;
+  font-size: var(--text-display);
 }
 
 .secret {
-  border: 1px solid var(--line);
-  border-radius: 1.2rem;
-  background: var(--card);
-  padding: 1.4rem 1rem;
+  position: relative;
+  overflow: hidden;
+  min-height: 17rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: var(--space-2);
+  border: 1px solid color-mix(in srgb, var(--accent) 25%, var(--line));
+  border-radius: var(--radius-lg);
+  background:
+    radial-gradient(circle at 50% 0, color-mix(in srgb, var(--accent) 16%, transparent), transparent 65%),
+    linear-gradient(150deg, var(--raised), var(--card) 62%);
+  padding: var(--space-5) var(--space-4);
   text-align: center;
+  box-shadow: var(--elevation-2);
 }
 
 .secret span {
@@ -74,7 +104,7 @@
 }
 
 .unknown {
-  color: #9ec5ff;
+  color: var(--doesnt-know);
 }
 
 .word {
@@ -83,39 +113,6 @@
   font-size: clamp(3.2rem, 16vw, 5.4rem);
   line-height: 0.95;
   overflow-wrap: anywhere;
-}
-
-.reveal,
-.pass,
-.choice {
-  width: 100%;
-  min-height: 3.6rem;
-  border-radius: 1rem;
-  font: inherit;
-  font-size: 1.15rem;
-  font-weight: 800;
-}
-
-.reveal {
-  border: 0;
-  background: var(--color-primary);
-  color: var(--on-accent);
-}
-
-.reveal:disabled {
-  opacity: 0.45;
-}
-
-.pass,
-.choice {
-  border: 1px solid var(--line);
-  background: var(--card);
-  color: var(--text);
-}
-
-.choice[aria-pressed='true'] {
-  border-color: var(--accent);
-  background: color-mix(in srgb, var(--color-primary) 24%, var(--color-surface));
 }
 
 .list {

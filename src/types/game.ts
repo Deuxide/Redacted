@@ -88,12 +88,13 @@ export interface ActiveGame {
 export const MIN_PLAYERS = 3;
 export const MAX_PLAYERS = 30;
 export const MIN_UNDERCOVER = 1;
+export const MIN_WORD_UNDERCOVER = 0;
 export const MIN_DOESNT_KNOW = 0;
-export const MIN_CIVILIANS = 1;
+export const MIN_CIVILIANS = 0;
 export const MIN_WORDS_PER_GROUP = 2;
 
 export function maxUndercover(playerCount: number, doesntKnowCount = 0): number {
-  return Math.max(MIN_UNDERCOVER, playerCount - Math.max(0, doesntKnowCount) - MIN_CIVILIANS);
+  return Math.max(MIN_WORD_UNDERCOVER, playerCount - Math.max(0, doesntKnowCount) - MIN_CIVILIANS);
 }
 
 export function maxDoesntKnow(playerCount: number, undercoverCount: number): number {

@@ -1,5 +1,5 @@
 import type { SetupDraft, TieBehavior } from '../types/game';
-import { MAX_PLAYERS, MIN_CIVILIANS, MIN_PLAYERS, MIN_UNDERCOVER, maxDoesntKnow, maxSuspects, maxUndercover } from '../types/game';
+import { MAX_PLAYERS, MIN_CIVILIANS, MIN_PLAYERS, MIN_WORD_UNDERCOVER, maxDoesntKnow, maxSuspects, maxUndercover } from '../types/game';
 import { BUILTIN_SET_ID } from '../data/builtinWordSets';
 import { createId } from '../wordSets/ids';
 
@@ -31,7 +31,7 @@ export function clampPlayerCount(value: number): number {
 }
 
 export function clampUndercoverCount(value: number, playerCount: number, doesntKnowCount = 0): number {
-  return Math.min(maxUndercover(playerCount, doesntKnowCount), Math.max(MIN_UNDERCOVER, Math.round(value)));
+  return Math.min(maxUndercover(playerCount, doesntKnowCount), Math.max(MIN_WORD_UNDERCOVER, Math.round(value)));
 }
 
 export function clampDoesntKnowCount(value: number, playerCount: number, undercoverCount: number): number {
@@ -44,10 +44,11 @@ export function balanceRoles(
   doesntKnowCount: number,
   priority: 'undercover' | 'doesntKnow' = 'undercover',
 ): { undercoverCount: number; doesntKnowCount: number } {
-  let undercover = Math.min(Math.max(MIN_UNDERCOVER, Math.round(undercoverCount)), playerCount - MIN_CIVILIANS);
+  const maxRoles = playerCount - MIN_CIVILIANS;
+  let undercover = Math.min(Math.max(MIN_WORD_UNDERCOVER, Math.round(undercoverCount)), maxRoles);
   let doesntKnow = Math.min(Math.max(0, Math.round(doesntKnowCount)), playerCount - MIN_CIVILIANS);
   if (undercover + doesntKnow > playerCount - MIN_CIVILIANS) {
-    if (priority === 'doesntKnow') undercover = Math.max(MIN_UNDERCOVER, playerCount - MIN_CIVILIANS - doesntKnow);
+    if (priority === 'doesntKnow') undercover = Math.max(MIN_WORD_UNDERCOVER, playerCount - MIN_CIVILIANS - doesntKnow);
     else doesntKnow = Math.max(0, playerCount - MIN_CIVILIANS - undercover);
   }
   return { undercoverCount: undercover, doesntKnowCount: doesntKnow };

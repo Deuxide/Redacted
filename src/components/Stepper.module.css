@@ -27,14 +27,24 @@
 }
 
 .controls button {
-  width: 2.75rem;
-  height: 2.75rem;
+  width: 3rem;
+  height: 3rem;
+  min-width: 3rem;
+  display: grid;
+  place-items: center;
   border: 0;
-  border-radius: 0.8rem;
+  border-radius: var(--radius-sm);
   background: var(--raised);
   color: var(--text);
-  font: inherit;
-  font-size: 1.4rem;
+}
+
+.controls svg {
+  width: 1.2rem;
+  height: 1.2rem;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
 }
 
 .controls button:disabled {

@@ -48,7 +48,10 @@ export function normalizeHex(value: unknown): string | null {
 
 export function contrastText(hex: string): string {
   const rgb = hexToRgb(hex);
-  return relativeLuminance(rgb) > 0.42 ? '#1b1403' : '#f7f4ee';
+  const luminance = relativeLuminance(rgb);
+  const darkContrast = (luminance + 0.05) / 0.05;
+  const lightContrast = 1.05 / (luminance + 0.05);
+  return darkContrast >= lightContrast ? '#000000' : '#ffffff';
 }
 
 export function applyTheme(theme: ThemeChoice): void {

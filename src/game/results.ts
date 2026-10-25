@@ -59,8 +59,12 @@ export function playerInOrder(players: AssignedPlayer[], order: string[], index:
   return players.find((player) => player.id === order[index]);
 }
 
-export function minActiveToContinue(active: AssignedPlayer[]): number {
-  return active.some((player) => player.role === 'doesntKnow') ? MIN_ACTIVE_WITH_DOESNT_KNOW : MIN_ACTIVE_TO_VOTE;
+export function minActiveToContinue(players: AssignedPlayer[]): number {
+  const active = activePlayers(players);
+  const hasUndercover = players.some((player) => player.role === 'undercover');
+  return active.some((player) => player.role === 'doesntKnow') && hasUndercover
+    ? MIN_ACTIVE_WITH_DOESNT_KNOW
+    : MIN_ACTIVE_TO_VOTE;
 }
 
 export function isThreeRoleDraw(active: AssignedPlayer[]): boolean {
@@ -74,16 +78,23 @@ export function evaluateGameState(players: AssignedPlayer[]): GameResult {
   const civilians = active.filter((player) => player.role === 'civilian').length;
   const undercover = active.filter((player) => player.role === 'undercover').length;
   const doesntKnow = active.filter((player) => player.role === 'doesntKnow').length;
-  if (civilians === 1 && undercover === 1 && doesntKnow === 1) return { status: 'draw' };
-  if (undercover === 0 && civilians > 0) return { status: 'civilianWin' };
-  if (civilians === 0 && undercover === 0 && doesntKnow > 0) return { status: 'doesntKnowWin' };
-  if (civilians > 0 && undercover >= civilians) return { status: 'undercoverWin' };
+  const hasUndercover = players.some((player) => player.role === 'undercover');
+  const civilianWordKnown = players.some((player) => player.role === 'doesntKnow' && player.doesntKnowGuess === 'correct');
+  if (hasUndercover) {
+    if (civilians === 1 && undercover === 1 && doesntKnow === 1) return { status: 'draw' };
+    if (undercover === 0 && civilians > 0) return { status: 'civilianWin' };
+    if (civilians === 0 && undercover === 0 && doesntKnow > 0) return { status: 'doesntKnowWin' };
+    if (civilians > 0 && undercover >= civilians) return { status: 'undercoverWin' };
+    return { status: 'continue' };
+  }
+  if (undercover === 0 && doesntKnow === 0 && civilians > 0 && !civilianWordKnown) return { status: 'civilianWin' };
+  if (civilians === 0 && doesntKnow > 0 && !civilianWordKnown) return { status: 'doesntKnowWin' };
   return { status: 'continue' };
 }
 
 export function canVoteAgain(players: AssignedPlayer[]): boolean {
   const active = activePlayers(players);
-  return evaluateGameState(players).status === 'continue' && active.length >= minActiveToContinue(active);
+  return evaluateGameState(players).status === 'continue' && active.length >= minActiveToContinue(players);
 }
 
 export function evaluateWinCondition(players: AssignedPlayer[]): {

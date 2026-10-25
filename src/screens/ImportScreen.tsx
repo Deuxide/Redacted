@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Button, Card } from '../components/Primitives';
 import { ScreenShell } from '../components/ScreenShell';
 import { useI18n } from '../i18n/LanguageProvider';
 import type { MessageKey } from '../i18n/messages';
@@ -52,7 +53,8 @@ export function ImportScreen() {
   }
 
   return (
-    <ScreenShell title={t('importTitle')} subtitle={t('importSubtitle')} onBack={goHome}>
+    <ScreenShell title={t('importTitle')} subtitle={t('importSubtitle')} onBack={goHome}
+      footer={pending.length ? <Button wide onClick={() => addImportedSets(pending)}>{t('addSets', { count: pending.length })}</Button> : undefined}>
       <p className={styles.note}>{t('importNote', { example: '{ "Fruit": ["Apple", "Orange"] }' })}</p>
       <label className={styles.file}>
         {t('chooseFile')}
@@ -62,18 +64,17 @@ export function ImportScreen() {
         {t('pasteJson')}
         <textarea value={paste} rows={8} onChange={(event) => setPaste(event.target.value)} />
       </label>
-      <button type="button" className={styles.secondary} onClick={() => review(paste)} disabled={!paste.trim()}>
+      <Button variant="secondary" wide onClick={() => review(paste)} disabled={!paste.trim()}>
         {t('checkPaste')}
-      </button>
-      {errors.map((error) => <p key={error} className={styles.warn}>{label(error)}</p>)}
-      {warnings.map((warning) => <p key={warning} className={styles.note}>{label(warning)}</p>)}
+      </Button>
+      {errors.length ? <div className={styles.validation} role="alert" aria-live="polite">{errors.map((error) => <p key={error} className={styles.warn}>{label(error)}</p>)}</div> : null}
+      {warnings.length ? <div className={styles.validation} role="status" aria-live="polite">{warnings.map((warning) => <p key={warning} className={styles.note}>{label(warning)}</p>)}</div> : null}
       {pending.map((set) => (
-        <article key={set.id} className={styles.card}>
+        <Card key={set.id} className={styles.card}>
           <h2>{set.name}</h2>
           <p>{t('groupsReady', { count: set.groups.length })}</p>
-        </article>
+        </Card>
       ))}
-      {pending.length ? <button type="button" className={styles.primary} onClick={() => addImportedSets(pending)}>{t('addSets', { count: pending.length })}</button> : null}
       <p className={styles.note}>{t('sampleLink')} <a href="/word-set.example.json">word-set.example.json</a></p>
     </ScreenShell>
   );
